@@ -87,6 +87,47 @@ export function clearPageHtml(id: string): void {
 }
 
 // ============================================================
+// Ancestry context (for API requests)
+// ============================================================
+
+import { HistoryItem } from "@/types";
+
+const MAX_ANCESTRY = 10;
+
+/**
+ * Build ancestry context by walking up the parentId chain from localStorage.
+ * Returns HistoryItem[] in chronological order (oldest ancestor first).
+ *
+ * Uses the AI-generated `summary` stored in each PageData — no HTML parsing needed.
+ */
+export function buildAncestryContext(parentId?: string): HistoryItem[] {
+  if (!parentId) return [];
+
+  const pages = getAllPages();
+  const ancestors: HistoryItem[] = [];
+  let currentId: string | undefined = parentId;
+
+  while (currentId && ancestors.length < MAX_ANCESTRY) {
+    const page: PageData | undefined = pages[currentId];
+    if (!page) break;
+
+    ancestors.push({
+      query: page.query,
+      title: page.title || page.query,
+      description: page.query,
+      links: page.links || [],
+      summary: page.summary,
+    });
+
+    currentId = page.parentId;
+  }
+
+  // Reverse to chronological order (oldest ancestor first)
+  ancestors.reverse();
+  return ancestors;
+}
+
+// ============================================================
 // Tree utilities
 // ============================================================
 

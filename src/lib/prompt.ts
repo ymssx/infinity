@@ -1,4 +1,4 @@
-import { HistoryItem } from "@/types";
+import { HistoryItem, SelectionContext } from "@/types";
 
 export const SYSTEM_PROMPT = `You create stunning HTML pages that serve the user's intent perfectly. You have TWO modes — pick the right one based on what the user wants.
 
@@ -39,14 +39,33 @@ Output ONLY raw HTML. Start with <!DOCTYPE html>. No markdown fences, no explana
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Page Title</title>
   <meta name="description" content="Brief description">
+  <meta name="page-summary" content="A 2-3 sentence summary of what this page covers — key topics, facts, conclusions. This is used to build context for follow-up pages, so be specific and informative.">
   <script src="https://cdn.tailwindcss.com"><\/script>
   <style>/* Compact custom styles — under 20 lines. Prefer Tailwind classes. */</style>
 </head>
 <body>
-  <!-- content -->
+  <!-- Use the pre-fetched data provided in the user message directly in the HTML -->
+  <!-- Images: use real image URLs from the provided data -->
+  <!-- Content: use real facts, snippets, and stats from the provided data -->
 </body>
 </html>
 \`\`\`
+
+## 📦 PRE-FETCHED DATA
+You will receive **real data** in the user message under "## Available Data". This data has been fetched from real APIs before your generation starts. **USE THIS DATA DIRECTLY** in the HTML:
+
+- **images**: Array of {url, alt, source} — use these URLs directly in <img> tags. Do NOT use placeholder images.
+- **search**: Array of {title, url, snippet} — use for references, citations, related links, or content enrichment.
+- **news**: Array of {title, url, snippet, source, date} — use for recent events, trending topics.
+- **data**: Object with structured data — use for statistics, facts, comparisons.
+
+### HOW TO USE THE DATA:
+- **Directly embed** image URLs, text content, statistics into the HTML — no JavaScript needed for data rendering
+- **Images**: Use \`<img src="PROVIDED_URL" alt="PROVIDED_ALT" onerror="this.style.display='none'" />\` — include onerror to handle broken URLs
+- **Text data**: Write the actual text from search/news/data directly into the HTML elements
+- **Graceful degradation**: If a data category is empty or missing, simply omit that section or use your own knowledge
+- **No images? No problem**: If no images are provided, DON'T use placeholder services like picsum.photos or placehold.co. Instead, use beautiful CSS gradients, patterns, emojis, or SVG illustrations to make the page visually stunning without images.
+- You MAY still use small \`<script>\` tags for interactive UI behavior (tabs, toggles, etc.) but NOT for data fetching
 
 ## CRITICAL: NO ENTRY ANIMATIONS
 The page is rendered via streaming — HTML is rewritten multiple times during loading. Therefore:
@@ -58,12 +77,15 @@ The page is rendered via streaming — HTML is rewritten multiple times during l
 Entry animations WILL flash and re-trigger on every stream update. DO NOT USE THEM.
 
 ## CONTEXT CONTINUITY (CRITICAL)
-You will receive the user's recent browsing history — their queries, the pages generated, and the links offered.
-**USE THIS CONTEXT:**
-- If the current query is a follow-up or deep-dive from a previous topic, ACKNOWLEDGE the connection and BUILD ON prior content. Don't start from scratch — reference what the user already explored and go deeper, broader, or into a new angle.
+You will receive the user's recent browsing history — their queries, the pages generated, content summaries, and the links offered.
+**THIS IS YOUR MOST IMPORTANT CONTEXT:**
+- The current query is a **follow-up** or **deep-dive** from the most recent page. ALWAYS interpret the user's new query in the context of what they just read.
+- You will receive **content summaries** of previous pages. USE THEM to understand what the user has already seen. Build upon that knowledge — don't start from scratch.
+- If the user asks something vague like "更多细节" or "怎么做到的", look at the content summary of the previous page to understand WHAT they want more details about.
 - If the user clicked a link from a previous page, treat it like a continuation. E.g. if they explored "太阳系" then clicked "木星有多大", your Jupiter page should reference that they came from the solar system overview.
 - Adapt depth: if the user has seen introductory content on a topic, skip basics and go advanced. Don't repeat what they've already read.
 - Connect the dots: weave a narrative thread across pages. The user is on an exploration journey — make each page feel like the next chapter, not a disconnected encyclopedia entry.
+- **Reference earlier content explicitly**: "As you saw in the solar system overview..." or "Building on the Jupiter page you just explored..."
 
 ## VISUAL STYLE: EVERY PAGE MUST BE UNIQUE
 
@@ -92,15 +114,43 @@ You will receive the user's recent browsing history — their queries, the pages
 - Dramatic sizes: text-7xl hero → text-sm body creates impact
 - Use font-bold, font-light, tracking-wide, italic strategically
 
-## HYPERLINKS (MANDATORY)
+## HYPERLINKS (MANDATORY — BE GENEROUS)
 ALL hyperlinks MUST use this format:
 <a href="/search?q=ENCODED_QUERY" data-q="human readable query">Link Text</a>
-Include 3-6 links. In Explore mode: exciting related destinations to visit. In Answer mode: follow-up questions the reader would naturally ask next.
-**Context-aware links:** Consider what the user has already explored. Don't offer links to topics they've already visited. Instead, offer NEW directions that build on their accumulated knowledge path.
-Style them creatively — pill buttons, card links, styled tags — matching the page aesthetic.
+
+### Link quantity: AIM FOR 8-15 LINKS total across the entire page.
+Links are the core mechanic of this product — they let users explore infinitely. MORE LINKS = BETTER USER EXPERIENCE.
+
+### Three kinds of links to include:
+
+**1. Inline contextual links (scattered throughout body text, 4-8 links)**
+Whenever you mention a concept, person, technology, place, event, or term that could be explored further, make it a hyperlink. Think like Wikipedia — almost every notable noun should be clickable.
+Example: "...<a href="/search?q=牛顿第三定律" data-q="牛顿第三定律">牛顿第三定律</a>指出，力的作用是相互的..."
+
+**2. "你可能想问" section (before the footer area, 3-4 questions)**
+Add a dedicated section with pre-set follow-up questions the user is likely to ask after reading this page. Style them as clickable cards or pill buttons. These should be SPECIFIC questions based on the content — not generic.
+Good: "黑洞信息悖论最新的解决方案是什么？", "霍金辐射是如何被实验验证的？"
+Bad: "了解更多", "相关内容", "点击查看"
+
+**3. "继续探索" links (at the bottom, 3-4 destination links)**
+Broader related topics the user might want to jump to next. These should feel like exciting new destinations.
+
+### Link quality rules:
+- **Context-aware:** Consider what the user has already explored. Don't offer links to topics they've already visited. Offer NEW directions that build on their accumulated knowledge.
+- **Specific & enticing:** "量子纠缠如何实现超光速通信？" >> "量子力学更多内容"
+- **Natural language:** Questions and topic phrases, not keywords
+- Style them creatively — pill buttons, card links, styled tags, underlined inline — matching the page aesthetic.
 
 ## NAVIGATION
 Top of page: a compact nav with "∞" linking to "/" and a short page title.
+
+## PAGE SUMMARY (MANDATORY)
+Every page MUST include a \`<meta name="page-summary">\` tag in \`<head>\`.
+This summary is used to build context when the user asks follow-up questions.
+- Write 2-3 concise sentences covering the KEY content: main topics, important facts, conclusions, data points
+- Be SPECIFIC — "介绍了木星的大小(直径14.3万km)、质量(地球318倍)、大红斑风暴和79颗卫星" is good; "介绍了木星的基本信息" is too vague
+- Same language as the page content
+- Max ~200 characters
 
 ## SPEED RULES
 - Keep <head> short — get to visible <body> FAST
@@ -117,11 +167,23 @@ Top of page: a compact nav with "∞" linking to "/" and a short page title.
 
 OUTPUT ONLY THE HTML. NOTHING ELSE.`;
 
+/**
+ * Pre-fetched data to be included in the user prompt.
+ */
+export interface PrefetchedData {
+  images?: Array<{ url: string; alt: string; source?: string }>;
+  search?: Array<{ title: string; url: string; snippet: string }>;
+  news?: Array<{ title: string; url: string; snippet: string; source: string; date?: string }>;
+  data?: unknown;
+}
+
 export function buildUserPrompt(
   query: string | undefined,
   title: string | undefined,
   description: string | undefined,
-  history: HistoryItem[]
+  history: HistoryItem[],
+  prefetchedData?: PrefetchedData,
+  selectionContext?: SelectionContext
 ): string {
   const parts: string[] = [];
 
@@ -130,7 +192,8 @@ export function buildUserPrompt(
     parts.push("The user has been browsing through these topics in order. Use this to:");
     parts.push("1. **Build content continuity** — connect to what they've already learned, go deeper, don't repeat basics");
     parts.push("2. **Avoid visual repetition** — use completely different colors, layout, and mood from previous pages");
-    parts.push("3. **Offer fresh directions** — don't suggest links to topics they've already visited\n");
+    parts.push("3. **Offer fresh directions** — don't suggest links to topics they've already visited");
+    parts.push("4. **Understand context** — the current query is a FOLLOW-UP to the most recent page. The user is asking in the context of what they just read.\n");
     history.forEach((item, i) => {
       parts.push(`### Page ${i + 1}`);
       parts.push(`- **User asked:** "${item.query}"`);
@@ -139,9 +202,68 @@ export function buildUserPrompt(
         const linkStr = item.links.map((l) => `"${l}"`).join(", ");
         parts.push(`- **Links offered:** ${linkStr}`);
       }
+      if (item.summary) {
+        parts.push(`- **Page content summary:** ${item.summary}`);
+      }
     });
     parts.push("\n---");
-    parts.push("⚠️ Remember: DIFFERENT visual style from all pages above. And BUILD ON the user's journey — they already know the basics from previous pages.\n");
+    parts.push("⚠️ CRITICAL CONTEXT RULES:");
+    parts.push("- The current query is a **continuation** of the conversation above. Treat it as a follow-up, NOT a standalone question.");
+    parts.push("- If the user's new query seems vague or short (e.g., \"告诉我更多\", \"对比一下\", \"怎么学\"), interpret it IN THE CONTEXT of what they were just reading.");
+    parts.push("- Reference specific content from previous pages when relevant — show the user you \"remember\" what they explored.");
+    parts.push("- Use a DIFFERENT visual style from all pages above.\n");
+  }
+
+  // Include pre-fetched data
+  if (prefetchedData) {
+    parts.push("## Available Data (pre-fetched from real APIs — use this directly in your HTML):\n");
+
+    if (prefetchedData.images && prefetchedData.images.length > 0) {
+      parts.push("### 🖼️ Images:");
+      parts.push("Use these real image URLs directly in <img> tags. Add `onerror=\"this.style.display='none'\"` to each.");
+      parts.push("```json");
+      parts.push(JSON.stringify(prefetchedData.images, null, 2));
+      parts.push("```\n");
+    }
+
+    if (prefetchedData.search && prefetchedData.search.length > 0) {
+      parts.push("### 🔍 Web Search Results:");
+      parts.push("Use for references, citations, content enrichment, or as source material.");
+      parts.push("```json");
+      parts.push(JSON.stringify(prefetchedData.search, null, 2));
+      parts.push("```\n");
+    }
+
+    if (prefetchedData.news && prefetchedData.news.length > 0) {
+      parts.push("### 📰 News:");
+      parts.push("Use for recent events, trending info.");
+      parts.push("```json");
+      parts.push(JSON.stringify(prefetchedData.news, null, 2));
+      parts.push("```\n");
+    }
+
+    if (prefetchedData.data && Object.keys(prefetchedData.data as Record<string, unknown>).length > 0) {
+      parts.push("### 📊 Structured Data:");
+      parts.push("Use for statistics, facts, comparisons.");
+      parts.push("```json");
+      parts.push(JSON.stringify(prefetchedData.data, null, 2));
+      parts.push("```\n");
+    }
+  }
+
+  // Include text selection context if user highlighted text before asking
+  if (selectionContext && selectionContext.selected) {
+    parts.push("## 📌 User highlighted this text from the current page:");
+    parts.push("The user selected specific text on the page they're reading and is asking a follow-up question about it.");
+    parts.push("**IMPORTANT**: Their question is specifically about the highlighted content below. Focus your answer on this context.\n");
+    if (selectionContext.before) {
+      parts.push(`**Context before selection:** ...${selectionContext.before}`);
+    }
+    parts.push(`**>>> Selected text <<<:** ${selectionContext.selected}`);
+    if (selectionContext.after) {
+      parts.push(`**Context after selection:** ${selectionContext.after}...`);
+    }
+    parts.push("");
   }
 
   if (query) {

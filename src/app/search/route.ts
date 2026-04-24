@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   const parentId = request.nextUrl.searchParams.get("parentId");
+  const sc = request.nextUrl.searchParams.get("sc"); // selection context (JSON)
 
   if (!query) {
     return NextResponse.redirect(new URL("/", request.url));
@@ -22,11 +23,14 @@ export async function GET(request: NextRequest) {
 
   const pageId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-  // Build redirect URL with optional parentId
+  // Build redirect URL with optional parentId and selection context
   const redirectUrl = new URL(`/page/${pageId}`, request.url);
   redirectUrl.searchParams.set("q", query);
   if (parentId) {
     redirectUrl.searchParams.set("parentId", parentId);
+  }
+  if (sc) {
+    redirectUrl.searchParams.set("sc", sc);
   }
 
   return NextResponse.redirect(redirectUrl);
