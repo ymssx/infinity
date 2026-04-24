@@ -6,8 +6,10 @@ export interface PageData {
 }
 
 export interface HistoryItem {
-  title: string;
-  description: string;
+  query: string;       // The user's original input/question
+  title: string;       // Page <title> from generated HTML
+  description: string; // Page <meta description> from generated HTML
+  links: string[];     // Hyperlink queries (data-q values) from generated page
 }
 
 export interface GenerateRequest {

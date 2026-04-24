@@ -85,6 +85,7 @@ function PageContent() {
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
   const [phase, setPhase] = useState<"streaming" | "done" | "error">("streaming");
   const [progress, setProgress] = useState(0); // rough char count for progress hint
+  const finalHtmlRef = useRef<string>(""); // stores the final complete HTML for export
 
   // Capsule state — single instance, always
   const capsuleRef = useRef<HTMLDivElement>(null);
@@ -138,20 +139,15 @@ function PageContent() {
    * Stops generation, then opens external links in new tab, internal links in place.
    */
   const navigateToHref = useCallback((href: string) => {
-    // Stop the current generation immediately (safe even if already done)
-    readerRef.current?.cancel().catch(() => {});
-    abortRef.current?.abort();
-
     if (href.startsWith("#")) {
       // Anchor links — scroll within iframe
       try {
         const doc = iframeRef.current?.contentDocument;
         if (doc?.defaultView) doc.defaultView.location.hash = href;
       } catch { /* ignore */ }
-    } else if (href.startsWith("http://") || href.startsWith("https://")) {
-      window.open(href, "_blank", "noopener,noreferrer");
     } else {
-      window.location.href = href;
+      // All navigations open in a new tab to preserve the current page
+      window.open(href, "_blank", "noopener,noreferrer");
     }
   }, []);
 
@@ -255,7 +251,7 @@ function PageContent() {
         const res = await fetch("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, history: [] }),
+          body: JSON.stringify({ query }),
           signal: abortController.signal,
         });
 
@@ -314,6 +310,7 @@ function PageContent() {
         buffer = buffer.replace(/^```(?:html|HTML)?\s*\n?/, "");
         buffer = buffer.replace(/\n?```\s*$/, "");
         renderToIframe(buffer);
+        finalHtmlRef.current = buffer; // Save for export
         setPhase("done");
       } catch (err) {
         if (cancelled) return;
@@ -347,11 +344,52 @@ function PageContent() {
     abortRef.current?.abort();
   }, []);
 
+  // Export: download iframe content as HTML file
+  const handleExport = useCallback(() => {
+    // Try to get HTML from the iframe's live DOM (includes injected styles)
+    let html = "";
+    try {
+      const doc = iframeRef.current?.contentDocument;
+      if (doc?.documentElement) {
+        html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+      }
+    } catch { /* cross-origin fallback */ }
+
+    // Fallback to saved buffer
+    if (!html) {
+      html = finalHtmlRef.current;
+    }
+
+    if (!html) return;
+
+    // Remove the injected padding style we added for capsule clearance
+    html = html.replace(/<style>body\{padding-bottom:60px!important;\}<\/style>/g, "");
+
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    // Use the query as filename, sanitize it
+    const safeName = query
+      .replace(/[<>:"/\\|?*\x00-\x1f]/g, "")
+      .replace(/\s+/g, "_")
+      .slice(0, 60) || "page";
+    a.href = url;
+    a.download = `${safeName}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [query]);
+
   // Capsule: submit new query
   const handleCapsuleSubmit = useCallback(() => {
     const trimmed = capsuleQuery.trim();
     if (!trimmed || trimmed === query) return;
-    window.location.href = `/search?q=${encodeURIComponent(trimmed)}`;
+    // Open in new tab to preserve the current page
+    window.open(`/search?q=${encodeURIComponent(trimmed)}`, "_blank", "noopener,noreferrer");
+    // Collapse capsule and reset input after navigating
+    setCapsuleExpanded(false);
+    setCapsuleQuery(query);
   }, [capsuleQuery, query]);
 
   // Capsule: click input area to expand
@@ -493,6 +531,24 @@ function PageContent() {
                   <rect x="4" y="4" width="16" height="16" rx="2" />
                 </svg>
                 <span className="text-xs">停止</span>
+              </button>
+            </>
+          )}
+
+          {/* Export button — shown when generation is complete */}
+          {phase === "done" && (
+            <>
+              <div className="w-px h-4 bg-gray-200 mx-2 shrink-0" />
+              <button
+                onClick={handleExport}
+                title="保存为 HTML 文件"
+                className="flex items-center gap-1 text-gray-400 hover:text-indigo-500 transition-colors cursor-pointer shrink-0"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M12 19l-5-5M12 19l5-5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4 21h16" strokeLinecap="round" />
+                </svg>
+                <span className="text-xs">保存</span>
               </button>
             </>
           )}

@@ -22,8 +22,12 @@ export async function POST(request: NextRequest) {
     return new Response("query is required", { status: 400 });
   }
 
-  const contextHistory =
-    history && history.length > 0 ? history : getRecentHistory();
+  // Always use server-side history store (maintained across page navigations)
+  // Only fall back to client-provided history if server store is empty
+  const serverHistory = getRecentHistory();
+  const contextHistory = serverHistory.length > 0 ? serverHistory : (history || []);
+
+  console.log(`[generate] query="${userQuery}" | history=${contextHistory.length} items | server=${serverHistory.length}`);
 
   const encoder = new TextEncoder();
 
@@ -47,7 +51,15 @@ export async function POST(request: NextRequest) {
         const descMatch = fullHtml.match(
           /<meta\s+name="description"\s+content="([^"]*)"/i
         );
-        addHistory(titleMatch?.[1] || userQuery, descMatch?.[1] || userQuery);
+        // Extract hyperlink queries (data-q attributes) from generated page
+        const linkMatches = [...fullHtml.matchAll(/data-q="([^"]*)"/g)];
+        const links = linkMatches.map((m) => m[1]).slice(0, 6);
+        addHistory(
+          userQuery,
+          titleMatch?.[1] || userQuery,
+          descMatch?.[1] || userQuery,
+          links
+        );
 
         controller.close();
       } catch (err) {

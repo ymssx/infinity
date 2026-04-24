@@ -1,7 +1,7 @@
 import { PageData, HistoryItem } from "@/types";
 
 const MAX_PAGES = 1000;
-const MAX_HISTORY = 5;
+const MAX_HISTORY = 10;
 
 const pageStore = new Map<string, PageData>();
 const historyStore: HistoryItem[] = [];
@@ -38,8 +38,8 @@ export function getPage(id: string): PageData | undefined {
   return pageStore.get(id);
 }
 
-export function addHistory(title: string, description: string): void {
-  historyStore.push({ title, description });
+export function addHistory(query: string, title: string, description: string, links: string[]): void {
+  historyStore.push({ query, title, description, links });
   if (historyStore.length > MAX_HISTORY) {
     historyStore.splice(0, historyStore.length - MAX_HISTORY);
   }
