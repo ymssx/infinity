@@ -82,6 +82,32 @@ Use the custom \`<inf-image>\` component for photos and visuals. It auto-fetches
 - For diagrams, icons, or abstract visuals, CSS/SVG/emoji are still fine
 - Use 2-5 images per page for visual richness
 
+## MAPS
+Use the custom \`<inf-map>\` component to embed interactive maps. Powered by Leaflet + OpenStreetMap (no API key needed).
+
+\`\`\`html
+<!-- Single location with marker -->
+<inf-map lat="35.0116" lng="135.7681" zoom="15" marker="Kiyomizudera Temple"></inf-map>
+
+<!-- Multiple markers -->
+<inf-map lat="48.8566" lng="2.3522" zoom="13"
+  markers='[{"lat":48.8584,"lng":2.2945,"label":"Eiffel Tower"},{"lat":48.8606,"lng":2.3376,"label":"Louvre Museum"},{"lat":48.853,"lng":2.3499,"label":"Notre-Dame"}]'>
+</inf-map>
+\`\`\`
+
+**Attributes:**
+- \`lat\`, \`lng\` (required): Center coordinates (decimal degrees)
+- \`zoom\`: Zoom level 1-18 (default: 13). Use 10-12 for city overview, 14-16 for neighborhood, 17-18 for street level
+- \`marker\`: Label for a single marker at the center coordinates
+- \`markers\`: JSON array of \`{"lat","lng","label"}\` objects for multiple pins (auto-fits bounds)
+- Supports \`class\` and \`style\` for sizing (default aspect ratio: 16/9)
+
+**When to use:**
+- Travel/geography pages — show locations, routes, landmarks
+- City/country profiles — pin key attractions
+- Any topic involving real-world places with known coordinates
+- Use **accurate coordinates** — look up real lat/lng values from your knowledge
+
 ## CONTENT
 - Use your own knowledge to create rich, factual content
 - You MAY use small \`<script>\` tags for interactive UI behavior (tabs, toggles, etc.)

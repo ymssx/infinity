@@ -8,6 +8,7 @@ import { isConfigured, getBasePath } from "@/lib/config";
 import { streamGeneratePage, streamRevisionPage } from "@/lib/openai";
 import { RevisionComment, buildAnnotatedHtml } from "@/lib/prompt";
 import { buildImageComponentScript } from "@/lib/image-component";
+import { buildMapComponentScript } from "@/lib/map-component";
 import SettingsModal from "@/components/SettingsModal";
 
 // ============================================================
@@ -456,10 +457,12 @@ class IncrementalIframeWriter {
   private committedLength = 0;
   private injectedDuringStream = false;
   private imageScript: string;
+  private mapScript: string;
 
   constructor(iframe: HTMLIFrameElement) {
     this.iframe = iframe;
     this.imageScript = buildImageComponentScript();
+    this.mapScript = buildMapComponentScript();
   }
 
   /**
@@ -473,7 +476,7 @@ class IncrementalIframeWriter {
     if (!this.opened) {
       doc.open();
       this.opened = true;
-      doc.write(`<script>${INTERACTION_SCRIPT}<\/script><script>${this.imageScript}<\/script><style>${INTERACTION_STYLE}</style>`);
+      doc.write(`<script>${INTERACTION_SCRIPT}<\/script><script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><style>${INTERACTION_STYLE}</style>`);
       this.injectedDuringStream = true;
     }
 
@@ -502,7 +505,7 @@ class IncrementalIframeWriter {
     if (!this.opened) {
       // Stream never started (or was reset); do a full write
       doc.open();
-      doc.write(`<script>${this.imageScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
+      doc.write(`<script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
       doc.write(finalHtml);
       doc.close();
     } else {
@@ -531,7 +534,7 @@ class IncrementalIframeWriter {
     if (!doc) return;
 
     doc.open();
-    doc.write(`<script>${this.imageScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
+    doc.write(`<script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
     doc.write(html);
     doc.close();
 
@@ -539,7 +542,7 @@ class IncrementalIframeWriter {
     this.opened = false;
   }
 
-  /** Inject interaction styles + scripts + image component into the current document */
+  /** Inject interaction styles + scripts + image/map components into the current document */
   private injectInteraction() {
     const doc = this.iframe.contentDocument;
     if (!doc) return;
@@ -549,11 +552,13 @@ class IncrementalIframeWriter {
       style.textContent = INTERACTION_STYLE;
       (doc.head || doc.documentElement || doc).appendChild(style);
 
-      // Inject <inf-image> Web Component BEFORE interaction script
-      // so any <inf-image> elements already in the DOM get upgraded
       const imgScript = doc.createElement("script");
       imgScript.textContent = this.imageScript;
       (doc.body || doc.documentElement || doc).appendChild(imgScript);
+
+      const mapScriptEl = doc.createElement("script");
+      mapScriptEl.textContent = this.mapScript;
+      (doc.body || doc.documentElement || doc).appendChild(mapScriptEl);
 
       const script = doc.createElement("script");
       script.textContent = INTERACTION_SCRIPT;
