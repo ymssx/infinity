@@ -204,7 +204,7 @@ const INTERACTION_SCRIPT = `
     if (!blockEl || blockEl === document.body) blockEl = ancestor;
 
     // Get the selected text for the annotation
-    var annotationText = '修订意见：针对「' + selectedText.slice(0, 50) + (selectedText.length > 50 ? '…' : '') + '」—— ' + comment;
+    var annotationText = 'Revision: regarding "' + selectedText.slice(0, 50) + (selectedText.length > 50 ? '…' : '') + '" —— ' + comment;
     var commentNode = document.createComment(' [REVISION id=' + rcId + '] ' + annotationText + ' ');
     if (blockEl && blockEl.parentNode) {
       blockEl.parentNode.insertBefore(commentNode, blockEl);
@@ -1421,12 +1421,12 @@ function PageContent() {
                   <path d="M20.49 9A9 9 0 0 0 5.64 5.64L4 9" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M3.51 15A9 9 0 0 0 18.36 18.36L20 15" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-xs font-medium">刷新</span>
+                <span className="text-xs font-medium">Refresh</span>
               </button>
               <div className="w-px h-4 bg-gray-300 mx-2 shrink-0" />
               <button
                 onClick={handleExport}
-                title="保存为 HTML 文件"
+                title="Save as HTML file"
                 className="flex items-center gap-1 text-gray-500 hover:text-indigo-500 transition-colors cursor-pointer shrink-0"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">

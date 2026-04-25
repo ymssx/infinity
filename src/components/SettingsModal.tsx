@@ -52,7 +52,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-800">设置</h2>
+          <h2 className="text-base font-semibold text-gray-800">Settings</h2>
           <button
             onClick={onClose}
             className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -68,7 +68,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
 
           {/* Provider Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2.5">选择模型服务</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2.5">Model Provider</label>
             <div className="grid grid-cols-2 gap-2">
               {MODEL_PRESETS.map((preset) => (
                 <button
@@ -102,7 +102,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
               >
                 <span className="text-lg leading-none">⚙️</span>
                 <span className={`text-sm font-medium ${isCustom ? "text-indigo-700" : "text-gray-700"}`}>
-                  自定义
+                  Custom
                 </span>
               </button>
             </div>
@@ -120,7 +120,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
               type="password"
               value={config.openaiApiKey}
               onChange={(e) => setConfig({ ...config, openaiApiKey: e.target.value })}
-              placeholder={currentPreset?.keyPlaceholder || "输入你的 API Key..."}
+              placeholder={currentPreset?.keyPlaceholder || "Enter your API Key..."}
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-300 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
             />
             {currentPreset ? (
@@ -138,7 +138,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                 </a>
               </p>
             ) : (
-              <p className="mt-1 text-xs text-gray-400">密钥仅保存在浏览器本地，不会发送到任何第三方。</p>
+              <p className="mt-1 text-xs text-gray-400">Your key is stored locally in the browser only. Never sent to any third party.</p>
             )}
           </div>
 
@@ -153,7 +153,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                 placeholder="https://api.openai.com/v1"
                 className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-300 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
               />
-              <p className="mt-1 text-xs text-gray-400">填写任何 OpenAI 兼容接口的 Base URL。</p>
+              <p className="mt-1 text-xs text-gray-400">Any OpenAI-compatible endpoint URL.</p>
             </div>
           ) : (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-xs text-gray-400">
@@ -163,7 +163,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
 
           {/* Model Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">模型</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Model</label>
             {currentPreset ? (
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-1.5">
@@ -190,7 +190,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                   placeholder={currentPreset.defaultModel}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-300 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
                 />
-                <p className="text-xs text-gray-400">可从上方快选，也可手动输入其他模型名称。</p>
+                <p className="text-xs text-gray-400">Pick from above or type any model name.</p>
               </div>
             ) : (
               <div>
@@ -198,7 +198,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                   type="text"
                   value={config.openaiModel}
                   onChange={(e) => setConfig({ ...config, openaiModel: e.target.value })}
-                  placeholder="模型名称"
+                  placeholder="Model name"
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-300 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all"
                 />
               </div>
@@ -212,14 +212,14 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
             onClick={onClose}
             className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
           >
-            取消
+            Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!config.openaiApiKey.trim() || (!isCustom ? false : !config.openaiBaseUrl.trim())}
             className="px-5 py-2 text-sm font-medium text-white bg-indigo-500 rounded-xl hover:bg-indigo-600 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
-            保存
+            Save
           </button>
         </div>
       </div>

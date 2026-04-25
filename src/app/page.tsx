@@ -6,12 +6,12 @@ import { isConfigured, getBasePath } from "@/lib/config";
 import SettingsModal from "@/components/SettingsModal";
 
 const examples = [
-  { text: "你能做什么", icon: "✨" },
-  { text: "太阳系是什么样的？", icon: "🪐" },
-  { text: "东京旅游攻略", icon: "🗼" },
-  { text: "CPU 是如何工作的？", icon: "⚡" },
-  { text: "帮我写一个科幻短篇故事", icon: "📖" },
-  { text: "Python 入门指南", icon: "🐍" },
+  { text: "What can you do?", icon: "✨" },
+  { text: "How does the solar system work?", icon: "🪐" },
+  { text: "Tokyo travel guide", icon: "🗼" },
+  { text: "How does a CPU work?", icon: "⚡" },
+  { text: "Write me a sci-fi short story", icon: "📖" },
+  { text: "Python beginner's guide", icon: "🐍" },
 ];
 
 function generateId(): string {
@@ -136,7 +136,7 @@ export default function HomePage() {
   };
 
   const handleClearHistory = useCallback(() => {
-    if (window.confirm("确定要清除所有浏览历史吗？此操作不可撤销。")) {
+    if (window.confirm("Clear all browsing history? This cannot be undone.")) {
       clearAllPages();
       setTrees([]);
       setShowHistory(false);
@@ -155,13 +155,13 @@ export default function HomePage() {
       <button
         onClick={() => setSettingsOpen(true)}
         className="fixed top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 transition-all cursor-pointer"
-        title="设置"
+        title="Settings"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
           <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="12" cy="12" r="3" />
         </svg>
-        <span className="text-xs font-medium">设置</span>
+        <span className="text-xs font-medium">Settings</span>
       </button>
 
       <div className={`relative z-10 flex flex-col items-center w-full max-w-2xl transition-all duration-500 ${showHistory ? "pt-16" : "justify-center min-h-screen"}`}>
@@ -175,7 +175,7 @@ export default function HomePage() {
 
         {/* Tagline */}
         <p className="mb-10 text-center text-sm text-gray-400 tracking-wide">
-          问任何问题，探索无限可能
+          Ask anything. Explore endlessly.
         </p>
 
         {/* API Key warning */}
@@ -187,7 +187,7 @@ export default function HomePage() {
             <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            请先配置 OpenAI API Key → 点击设置
+            Please configure your API Key first → Settings
           </button>
         )}
 
@@ -219,7 +219,7 @@ export default function HomePage() {
               onKeyDown={(e) => e.key === "Enter" && !isComposingRef.current && handleSubmit()}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="输入你想了解的任何事物..."
+              placeholder="Ask anything you want to explore..."
               disabled={isNavigating}
               className="flex-1 bg-transparent px-3 py-4 text-[15px] text-gray-800 placeholder-gray-300 outline-none disabled:opacity-50"
             />
@@ -276,13 +276,13 @@ export default function HomePage() {
                   <path d="M12 8v4l3 3" strokeLinecap="round" strokeLinejoin="round" />
                   <circle cx="12" cy="12" r="9" />
                 </svg>
-                探索历史
+                History
               </h2>
               <button
                 onClick={handleClearHistory}
                 className="text-[11px] text-gray-300 hover:text-red-400 transition-colors cursor-pointer"
               >
-                清除全部
+                Clear all
               </button>
             </div>
 
@@ -296,7 +296,7 @@ export default function HomePage() {
 
         {/* Footer hint */}
         <p className="mt-16 mb-8 text-[11px] text-gray-300 tracking-wide select-none">
-          内容由 AI 驱动，仅供参考 · 纯前端运行，数据不经过服务器
+          Powered by AI · Runs entirely in your browser
         </p>
       </div>
 
