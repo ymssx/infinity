@@ -10,6 +10,7 @@ import { RevisionComment, buildAnnotatedHtml } from "@/lib/prompt";
 import { buildImageComponentScript } from "@/lib/image-component";
 import { buildMapComponentScript } from "@/lib/map-component";
 import { buildComponentScript } from "@/lib/component-component";
+import { safeBoundary, sanitizeScripts } from "@/lib/stream-utils";
 import SettingsModal from "@/components/SettingsModal";
 
 // ============================================================
@@ -491,41 +492,10 @@ class IncrementalIframeWriter {
       this.injectedDuringStream = true;
     }
 
-    // Find the safe write boundary:
-    // 1. Must end at a '>' (complete tag)
-    // 2. Must NOT be inside an unclosed <script>...</script> block
-    const candidate = buffer.lastIndexOf(">");
-    if (candidate === -1) return;
+    const safeEnd = safeBoundary(buffer, this.committedLength);
+    if (safeEnd <= this.committedLength) return;
 
-    let safeEnd = candidate + 1;
-    const region = buffer.slice(0, safeEnd);
-
-    // Check if we're inside an unclosed <script> tag
-    // Count <script (opening) vs </script> (closing) in the region
-    const openScripts = (region.match(/<script[\s>]/gi) || []).length;
-    const closeScripts = (region.match(/<\/script>/gi) || []).length;
-
-    if (openScripts > closeScripts) {
-      // We're inside an unclosed <script> — find the last safe point BEFORE this <script>
-      // Walk backwards to find the last </script> or the position before the unclosed <script>
-      const lastOpenScript = region.lastIndexOf("<script");
-      const altLastOpenScript = region.lastIndexOf("<SCRIPT");
-      const scriptStart = Math.max(lastOpenScript, altLastOpenScript);
-      if (scriptStart <= this.committedLength) return; // nothing safe to write
-      // Find the last '>' before this <script> tag
-      const safeBeforeScript = region.lastIndexOf(">", scriptStart - 1);
-      if (safeBeforeScript === -1 || safeBeforeScript + 1 <= this.committedLength) return;
-      safeEnd = safeBeforeScript + 1;
-    }
-
-    if (safeEnd <= this.committedLength) return; // nothing new
-
-    // Extract only the new portion
-    let newChunk = buffer.slice(this.committedLength, safeEnd);
-
-    // Sanitize script blocks
-    newChunk = this.sanitizeScripts(newChunk);
-
+    const newChunk = sanitizeScripts(buffer.slice(this.committedLength, safeEnd));
     this.committedLength = safeEnd;
     doc.write(newChunk);
   }
@@ -542,12 +512,12 @@ class IncrementalIframeWriter {
       // Stream never started (or was reset); do a full write
       doc.open();
       doc.write(`<script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${this.componentScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
-      doc.write(this.sanitizeScripts(finalHtml));
+      doc.write(sanitizeScripts(finalHtml));
       doc.close();
     } else {
       // Write any remaining content beyond what we've committed
       if (finalHtml.length > this.committedLength) {
-        doc.write(this.sanitizeScripts(finalHtml.slice(this.committedLength)));
+        doc.write(sanitizeScripts(finalHtml.slice(this.committedLength)));
       }
       doc.close();
 
@@ -563,18 +533,6 @@ class IncrementalIframeWriter {
   }
 
   /**
-   * Replace const/let with var inside <script> blocks in LLM-generated HTML.
-   * Prevents redeclaration errors when scripts re-execute during streaming.
-   */
-  private sanitizeScripts(html: string): string {
-    return html.replace(/<script[\s\S]*?<\/script>/gi, function(scriptBlock) {
-      return scriptBlock
-        .replace(/\bconst\s+/g, 'var ')
-        .replace(/\blet\s+/g, 'var ');
-    });
-  }
-
-  /**
    * Write complete HTML in one shot (used for cached pages, no streaming).
    */
   writeComplete(html: string) {
@@ -583,7 +541,7 @@ class IncrementalIframeWriter {
 
     doc.open();
     doc.write(`<script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${this.componentScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
-    doc.write(this.sanitizeScripts(html));
+    doc.write(sanitizeScripts(html));
     doc.close();
 
     this.committedLength = html.length;
@@ -651,6 +609,9 @@ function PageContent() {
   const finalHtmlRef = useRef<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Track AbortControllers for all active <inf-component> generations
+  const componentAbortsRef = useRef<Map<string, AbortController>>(new Map());
+
   // Capsule state
   const capsuleRef = useRef<HTMLDivElement>(null);
   const capsuleInputRef = useRef<HTMLInputElement>(null);
@@ -664,6 +625,10 @@ function PageContent() {
   // Settings modal state (opened e.g. when clicking unconfigured <inf-image>)
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<"llm" | "image">("llm");
+
+  // Track active <inf-component> count — capsule shows loading until all done
+  const [pendingComponents, setPendingComponents] = useState(0);
+
   const [revisionComments, setRevisionComments] = useState<RevisionComment[]>([]);
   const [revisionInput, setRevisionInput] = useState("");
   const [revisionPrompt, setRevisionPrompt] = useState(""); // additional instruction for revision
@@ -688,6 +653,8 @@ function PageContent() {
   useEffect(() => {
     const cleanup = () => {
       abortRef.current?.abort();
+      componentAbortsRef.current.forEach((ac) => ac.abort());
+      componentAbortsRef.current.clear();
     };
 
     window.addEventListener("beforeunload", cleanup);
@@ -856,7 +823,10 @@ function PageContent() {
         };
         if (!iframeWin?.__infComp) return;
 
+        setPendingComponents((n) => n + 1);
         const lang = navigator.language || "en";
+        const compAbort = new AbortController();
+        componentAbortsRef.current.set(compId, compAbort);
 
         // Fire-and-forget async — each component generates independently
         (async () => {
@@ -867,14 +837,21 @@ function PageContent() {
               (token: string) => {
                 try { iframeWin.__infComp?.token(compId, token); } catch { /* iframe gone */ }
               },
-              undefined,
+              compAbort.signal,
               lang
             );
             try { iframeWin.__infComp?.done(compId, html); } catch { /* ignore */ }
           } catch {
             try { iframeWin.__infComp?.error(compId); } catch { /* ignore */ }
+          } finally {
+            componentAbortsRef.current.delete(compId);
           }
         })();
+      }
+
+      // Track when sub-components finish
+      if (e.data.type === "inf-comp-finished") {
+        setPendingComponents((n) => Math.max(0, n - 1));
       }
     };
 
@@ -1261,9 +1238,12 @@ function PageContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, getWriter, refreshKey]);
 
-  // Stop generation handler
+  // Stop generation handler — aborts main stream + all sub-components
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
+    componentAbortsRef.current.forEach((ac) => ac.abort());
+    componentAbortsRef.current.clear();
+    setPendingComponents(0);
   }, []);
 
   // Refresh: clear cache and re-generate the page
@@ -1599,7 +1579,7 @@ function PageContent() {
               </>
             )}
 
-          {/* Streaming status */}
+          {/* Streaming status — main stream or sub-components still generating */}
           {(phase === "streaming" || phase === "loading") && (
             <>
               <div className="w-px h-4 bg-gray-300 mx-2 shrink-0" />
@@ -1623,8 +1603,32 @@ function PageContent() {
             </>
           )}
 
-          {/* Export & Refresh & Revision buttons */}
-          {phase === "done" && !revisionMode && (
+          {/* Sub-components still generating (main stream done but components loading) */}
+          {phase === "done" && pendingComponents > 0 && (
+            <>
+              <div className="w-px h-4 bg-gray-300 mx-2 shrink-0" />
+              <svg className="h-3.5 w-3.5 animate-spin text-purple-400 shrink-0" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span className="text-xs text-purple-500 ml-1 shrink-0 whitespace-nowrap">
+                {pendingComponents} component{pendingComponents > 1 ? "s" : ""}
+              </span>
+              <div className="w-px h-4 bg-gray-300 mx-2 shrink-0" />
+              <button
+                onClick={handleStop}
+                className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors cursor-pointer shrink-0"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                </svg>
+                <span className="text-xs font-medium">Stop</span>
+              </button>
+            </>
+          )}
+
+          {/* Export & Refresh & Revision buttons — only when ALL done */}
+          {phase === "done" && pendingComponents === 0 && !revisionMode && (
             <>
               <div className="w-px h-4 bg-gray-300 mx-2 shrink-0" />
               <button

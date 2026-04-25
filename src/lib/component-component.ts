@@ -3,13 +3,8 @@
 /**
  * Build the <inf-component> Web Component script to inject into iframes.
  *
- * Communication: uses a global registry on window instead of postMessage,
- * because during doc.write() streaming the iframe's event loop may not
- * process message events until doc.close().
- *
- * Parent calls: iframeWin.__infComp.token(compId, tokenStr)
- * Parent calls: iframeWin.__infComp.done(compId, fullHtml)
- * Parent calls: iframeWin.__infComp.error(compId)
+ * Rendering: simple innerHTML full replacement on each rAF.
+ * On done: final innerHTML with complete HTML triggers nested WC connectedCallback once.
  */
 export function buildComponentScript(): string {
   return `
@@ -18,19 +13,29 @@ export function buildComponentScript(): string {
 
   var _compId = 0;
 
-  // Global registry for parent to call into
-  window.__infComp = window.__infComp || { _cbs: {} };
+  // Global registry
+  window.__infComp = window.__infComp || { _cbs: {}, _active: 0 };
   window.__infComp.token = function(id, tk) {
     var cb = window.__infComp._cbs[id];
     if (cb) cb.onToken(tk);
   };
   window.__infComp.done = function(id, html) {
     var cb = window.__infComp._cbs[id];
-    if (cb) { cb.onDone(html); delete window.__infComp._cbs[id]; }
+    if (cb) {
+      cb.onDone(html);
+      delete window.__infComp._cbs[id];
+      window.__infComp._active = Math.max(0, window.__infComp._active - 1);
+      window.parent.postMessage({ type: 'inf-comp-finished', remaining: window.__infComp._active }, '*');
+    }
   };
   window.__infComp.error = function(id) {
     var cb = window.__infComp._cbs[id];
-    if (cb) { cb.onError(); delete window.__infComp._cbs[id]; }
+    if (cb) {
+      cb.onError();
+      delete window.__infComp._cbs[id];
+      window.__infComp._active = Math.max(0, window.__infComp._active - 1);
+      window.parent.postMessage({ type: 'inf-comp-finished', remaining: window.__infComp._active }, '*');
+    }
   };
 
   class InfComponent extends HTMLElement {
@@ -38,12 +43,11 @@ export function buildComponentScript(): string {
       var self = this;
       this._id = 'inf-comp-' + (++_compId);
       this._query = this.getAttribute('query') || '';
-      this._style = this.getAttribute('comp-style') || '';
+      this._compStyle = this.getAttribute('comp-style') || '';
       var aspect = this.getAttribute('aspect') || '';
 
       if (!this._query) return;
 
-      // Container styles
       this.style.display = 'block';
       this.style.position = 'relative';
       this.style.overflow = 'hidden';
@@ -61,23 +65,18 @@ export function buildComponentScript(): string {
       var started = false;
       var contentEl = null;
       var rafId = null;
-      var needsRender = false;
 
       function scheduleRender() {
-        needsRender = true;
         if (rafId !== null) return;
         rafId = requestAnimationFrame(function() {
           rafId = null;
-          if (!needsRender || !contentEl) return;
-          needsRender = false;
-          var lastGt = buffer.lastIndexOf('>');
-          if (lastGt >= 0) {
-            contentEl.innerHTML = buffer.slice(0, lastGt + 1);
-          }
+          if (!contentEl) return;
+          contentEl.innerHTML = buffer;
         });
       }
 
-      // Register callbacks
+      window.__infComp._active++;
+
       window.__infComp._cbs[this._id] = {
         onToken: function(token) {
           buffer += token;
@@ -97,10 +96,11 @@ export function buildComponentScript(): string {
         },
         onDone: function(html) {
           if (rafId !== null) cancelAnimationFrame(rafId);
+          var final = html || buffer;
           if (contentEl) {
-            contentEl.innerHTML = html || buffer;
+            contentEl.innerHTML = final;
           } else {
-            self.innerHTML = html || buffer || '<div style="padding:12px;color:rgba(99,102,241,0.5);font-size:12px;text-align:center;">No content generated</div>';
+            self.innerHTML = final || '<div style="padding:12px;color:rgba(99,102,241,0.5);font-size:12px;text-align:center;">No content generated</div>';
           }
         },
         onError: function() {
@@ -109,18 +109,18 @@ export function buildComponentScript(): string {
         }
       };
 
-      // Request generation from parent
       window.parent.postMessage({
         type: 'generate-component',
         compId: this._id,
         query: this._query,
-        style: this._style,
+        style: this._compStyle,
       }, '*');
     }
 
     disconnectedCallback() {
       if (this._id && window.__infComp && window.__infComp._cbs[this._id]) {
         delete window.__infComp._cbs[this._id];
+        window.__infComp._active = Math.max(0, window.__infComp._active - 1);
       }
     }
   }

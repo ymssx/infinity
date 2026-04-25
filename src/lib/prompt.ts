@@ -133,17 +133,33 @@ Since you write section headings and the component generates the body, you MUST 
 ## IMAGES
 Use the custom \`<inf-image>\` component for photos and visuals. It auto-fetches real images from stock photo APIs based on the \`query\` attribute.
 
+**\`<inf-image>\` is an unstyled block element** — it renders as a plain \`display:block\` box with no margin, padding, or border-radius by default. You MUST style it yourself with Tailwind classes, just like an \`<img>\` tag.
+
 \`\`\`html
-<inf-image query="Tokyo skyline at night neon lights" aspect="16/9"></inf-image>
-<inf-image query="quantum entanglement particle physics illustration" aspect="4/3"></inf-image>
-<inf-image query="fresh salmon sushi platter closeup" aspect="1/1"></inf-image>
+<!-- Full-width hero image with rounded corners and margin -->
+<inf-image query="Tokyo skyline at night neon lights" aspect="16/9" class="w-full rounded-2xl mb-8"></inf-image>
+
+<!-- Grid of images with consistent sizing -->
+<div class="grid grid-cols-2 gap-4">
+  <inf-image query="quantum entanglement particle physics" aspect="4/3" class="w-full rounded-xl"></inf-image>
+  <inf-image query="fresh salmon sushi platter closeup" aspect="4/3" class="w-full rounded-xl"></inf-image>
+</div>
+
+<!-- Small inline image with specific width -->
+<inf-image query="cat sleeping" aspect="1/1" class="w-32 h-32 rounded-full mx-auto my-4"></inf-image>
 \`\`\`
 
 **Attributes:**
 - \`query\` (required): Descriptive English search terms for best results
 - \`aspect\`: Aspect ratio — "16/9" (default), "4/3", "1/1", "3/2", "21/9"
 - \`alt\`: Alt text (defaults to query)
-- Supports standard \`class\` and \`style\` for sizing/layout (e.g. \`class="w-full rounded-xl"\`)
+
+**Styling (IMPORTANT — you must do this yourself):**
+- Use \`class="w-full"\` for full-width, or \`w-1/2\`, \`w-64\`, etc. for specific widths
+- Use \`rounded-xl\`, \`rounded-2xl\`, \`rounded-full\` for corners
+- Use \`mb-4\`, \`my-8\`, etc. for spacing — no spacing is applied by default
+- Use \`shadow-lg\`, \`ring-1 ring-gray-200\` for decorative borders
+- Works inside flexbox/grid layouts just like any block element
 
 **Rules:**
 - Use \`<inf-image>\` whenever you want a photo, landscape, portrait, food, architecture, nature, etc.
