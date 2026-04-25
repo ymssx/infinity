@@ -295,10 +295,12 @@ const INTERACTION_SCRIPT = `
     _lastRange = null;
   });
 
-  // ── Auto-fix low-contrast text (real-time via MutationObserver) ──
-  // Watches for new DOM nodes during streaming and checks text contrast immediately.
+  // ── Auto-fix critically low contrast text (real-time) ──
+  // Only fixes egregiously unreadable text (ratio < 2.5:1).
+  // Skips elements with gradient/image backgrounds where we can't reliably compute contrast.
+  // Composites semi-transparent background layers when walking up the DOM.
   (function() {
-    function luminance(r, g, b) {
+    function lum(r, g, b) {
       var a = [r, g, b].map(function(v) {
         v /= 255;
         return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
@@ -306,40 +308,74 @@ const INTERACTION_SCRIPT = `
       return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
     }
 
-    function parseColor(str) {
-      if (!str || str === 'transparent' || str === 'rgba(0, 0, 0, 0)') return null;
-      var m = str.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
-      if (m) return { r: +m[1], g: +m[2], b: +m[3] };
-      return null;
+    // Parse rgba with alpha support
+    function parseRGBA(str) {
+      if (!str || str === 'transparent') return null;
+      var m = str.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)(?:,\\s*([\\d.]+))?/);
+      if (!m) return null;
+      return { r: +m[1], g: +m[2], b: +m[3], a: m[4] !== undefined ? +m[4] : 1 };
+    }
+
+    // Composite fg color over bg color using alpha blending
+    function composite(fg, bg) {
+      var a = fg.a;
+      return {
+        r: Math.round(fg.r * a + bg.r * (1 - a)),
+        g: Math.round(fg.g * a + bg.g * (1 - a)),
+        b: Math.round(fg.b * a + bg.b * (1 - a)),
+        a: 1
+      };
     }
 
     function contrastRatio(fg, bg) {
-      var l1 = luminance(fg.r, fg.g, fg.b) + 0.05;
-      var l2 = luminance(bg.r, bg.g, bg.b) + 0.05;
+      var l1 = lum(fg.r, fg.g, fg.b) + 0.05;
+      var l2 = lum(bg.r, bg.g, bg.b) + 0.05;
       return l1 > l2 ? l1 / l2 : l2 / l1;
     }
 
+    function hasVisualBg(style) {
+      // Check if element has gradient or image background (not reliably computable)
+      var img = style.backgroundImage;
+      if (img && img !== 'none') return true;
+      return false;
+    }
+
+    // Walk up DOM, compositing semi-transparent bg layers.
+    // Returns null if any ancestor has gradient/image bg (= can't compute reliably).
     function getEffectiveBg(el) {
+      var layers = [];
       var node = el;
-      while (node && node !== document.documentElement) {
-        var bg = getComputedStyle(node).backgroundColor;
-        var c = parseColor(bg);
-        if (c) return c;
+      while (node && node.nodeType === 1) {
+        var style = getComputedStyle(node);
+        // If any ancestor has gradient/image bg, we can't compute — bail out
+        if (hasVisualBg(style)) return null;
+        var c = parseRGBA(style.backgroundColor);
+        if (c && c.a > 0) {
+          layers.push(c);
+          if (c.a >= 1) break; // opaque — no need to go further
+        }
         node = node.parentElement;
       }
-      return { r: 255, g: 255, b: 255 };
+      // Start from white (page default), composite layers from back to front
+      var bg = { r: 255, g: 255, b: 255, a: 1 };
+      for (var i = layers.length - 1; i >= 0; i--) {
+        bg = composite(layers[i], bg);
+      }
+      return bg;
     }
 
     function isLight(c) {
-      return luminance(c.r, c.g, c.b) > 0.179;
+      return lum(c.r, c.g, c.b) > 0.179;
     }
 
     var TEXT_TAGS = {H1:1,H2:1,H3:1,H4:1,H5:1,H6:1,P:1,SPAN:1,A:1,LI:1,TD:1,TH:1,LABEL:1,DIV:1,BLOCKQUOTE:1,FIGCAPTION:1,DT:1,DD:1,SUMMARY:1,CAPTION:1,STRONG:1,EM:1,B:1,I:1,SMALL:1};
     var _checked = new WeakSet();
 
+    // Only fix truly unreadable text — contrast ratio below 2.5:1
+    var MIN_RATIO = 2.5;
+
     function checkEl(el) {
       if (!TEXT_TAGS[el.tagName] || _checked.has(el)) return;
-      // Must have direct text content
       var hasText = false;
       for (var ci = 0; ci < el.childNodes.length; ci++) {
         if (el.childNodes[ci].nodeType === 3 && el.childNodes[ci].textContent.trim()) { hasText = true; break; }
@@ -348,19 +384,22 @@ const INTERACTION_SCRIPT = `
       _checked.add(el);
 
       var style = getComputedStyle(el);
-      // Skip gradient text
+      // Skip gradient text (background-clip: text)
       if (style.webkitBackgroundClip === 'text' || style.backgroundClip === 'text') return;
 
-      var fg = parseColor(style.color);
+      var fg = parseRGBA(style.color);
       if (!fg) return;
-      var bg = getEffectiveBg(el);
-      var ratio = contrastRatio(fg, bg);
 
-      if (ratio < 4.5) {
+      var bg = getEffectiveBg(el);
+      // bg is null when gradient/image bg detected — skip, can't reliably judge
+      if (!bg) return;
+
+      var ratio = contrastRatio(fg, bg);
+      if (ratio < MIN_RATIO) {
         if (isLight(bg)) {
-          el.style.color = 'rgba(0,0,0,0.87)';
+          el.style.color = '#1a1a1a';
         } else {
-          el.style.color = 'rgba(255,255,255,0.93)';
+          el.style.color = '#ededed';
         }
       }
     }
@@ -373,11 +412,9 @@ const INTERACTION_SCRIPT = `
       }
     }
 
-    // Debounced batch check for mutations
     var _pending = [];
     var _rafId = null;
-
-    function flushCheck() {
+    function flush() {
       _rafId = null;
       var nodes = _pending;
       _pending = [];
@@ -387,12 +424,10 @@ const INTERACTION_SCRIPT = `
     var observer = new MutationObserver(function(mutations) {
       for (var i = 0; i < mutations.length; i++) {
         var added = mutations[i].addedNodes;
-        for (var j = 0; j < added.length; j++) {
-          _pending.push(added[j]);
-        }
+        for (var j = 0; j < added.length; j++) _pending.push(added[j]);
       }
       if (_pending.length > 0 && _rafId === null) {
-        _rafId = requestAnimationFrame(flushCheck);
+        _rafId = requestAnimationFrame(flush);
       }
     });
 
