@@ -2,7 +2,7 @@
 
 import OpenAI from "openai";
 import { HistoryItem, SelectionContext } from "@/types";
-import { SYSTEM_PROMPT, buildUserPrompt, PrefetchedData, REVISION_SYSTEM_PROMPT, buildRevisionPrompt } from "./prompt";
+import { SYSTEM_PROMPT, buildUserPrompt, PrefetchedData, REVISION_SYSTEM_PROMPT, buildRevisionPrompt, COMPONENT_SYSTEM_PROMPT } from "./prompt";
 import { getConfig } from "./config";
 
 function getClient(): OpenAI {
@@ -143,8 +143,73 @@ export async function streamRevisionPage(
 
   fullText = fullText.replace(/^```(?:html|HTML)?\s*\n?/, "");
   fullText = fullText.replace(/\n?```\s*$/, "");
-  const htmlIdx = fullText.search(/<[!a-zA-Z]/);
-  if (htmlIdx > 0) fullText = fullText.slice(htmlIdx);
+  const revIdx = fullText.search(/<[!a-zA-Z]/);
+  if (revIdx > 0) fullText = fullText.slice(revIdx);
 
   return fullText;
+}
+
+/**
+ * Stream component content generation (lightweight HTML fragment).
+ * Used by <inf-component> — generates inline content, not a full page.
+ */
+export async function streamComponentContent(
+  query: string,
+  styleHint: string,
+  onToken: (token: string) => void,
+  signal?: AbortSignal,
+  lang?: string
+): Promise<string> {
+  const client = getClient();
+  const model = getModel();
+
+  const userParts: string[] = [];
+  if (lang) userParts.push(`Browser language: ${lang}`);
+  if (styleHint) userParts.push(`Style hint: ${styleHint}`);
+  userParts.push(`Generate: ${query}`);
+
+  const stream = await client.chat.completions.create(
+    {
+      model,
+      messages: [
+        { role: "system", content: COMPONENT_SYSTEM_PROMPT },
+        { role: "user", content: userParts.join("\n") },
+      ],
+      temperature: 0.85,
+      max_tokens: 4000,
+      stream: true,
+    },
+    { signal }
+  );
+
+  let compText = "";
+  let compStarted = false;
+  let compBuf = "";
+
+  for await (const chunk of stream) {
+    if (signal?.aborted) break;
+    const delta = chunk.choices[0]?.delta?.content;
+    if (!delta) continue;
+    compText += delta;
+
+    if (!compStarted) {
+      compBuf += delta;
+      const stripped = compBuf.replace(/^```(?:html|HTML)?\s*\n?/, "");
+      const idx = stripped.search(/<[a-zA-Z]/);
+      if (idx >= 0) {
+        compStarted = true;
+        const content = stripped.slice(idx);
+        if (content) onToken(content);
+      }
+    } else {
+      onToken(delta);
+    }
+  }
+
+  compText = compText.replace(/^```(?:html|HTML)?\s*\n?/, "");
+  compText = compText.replace(/\n?```\s*$/, "");
+  const compIdx = compText.search(/<[a-zA-Z]/);
+  if (compIdx > 0) compText = compText.slice(compIdx);
+
+  return compText;
 }

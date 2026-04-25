@@ -5,10 +5,11 @@ import { useSearchParams } from "next/navigation";
 import { savePage, getPage as getCachedPage, clearPageHtml, buildAncestryContext } from "@/lib/client-store";
 import { SelectionContext } from "@/types";
 import { isConfigured, getBasePath } from "@/lib/config";
-import { streamGeneratePage, streamRevisionPage } from "@/lib/openai";
+import { streamGeneratePage, streamRevisionPage, streamComponentContent } from "@/lib/openai";
 import { RevisionComment, buildAnnotatedHtml } from "@/lib/prompt";
 import { buildImageComponentScript } from "@/lib/image-component";
 import { buildMapComponentScript } from "@/lib/map-component";
+import { buildComponentScript } from "@/lib/component-component";
 import SettingsModal from "@/components/SettingsModal";
 
 // ============================================================
@@ -466,11 +467,13 @@ class IncrementalIframeWriter {
   private injectedDuringStream = false;
   private imageScript: string;
   private mapScript: string;
+  private componentScript: string;
 
   constructor(iframe: HTMLIFrameElement) {
     this.iframe = iframe;
     this.imageScript = buildImageComponentScript();
     this.mapScript = buildMapComponentScript();
+    this.componentScript = buildComponentScript();
   }
 
   /**
@@ -484,7 +487,7 @@ class IncrementalIframeWriter {
     if (!this.opened) {
       doc.open();
       this.opened = true;
-      doc.write(`<script>${INTERACTION_SCRIPT}<\/script><script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><style>${INTERACTION_STYLE}</style>`);
+      doc.write(`<script>${INTERACTION_SCRIPT}<\/script><script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${this.componentScript}<\/script><style>${INTERACTION_STYLE}</style>`);
       this.injectedDuringStream = true;
     }
 
@@ -513,7 +516,7 @@ class IncrementalIframeWriter {
     if (!this.opened) {
       // Stream never started (or was reset); do a full write
       doc.open();
-      doc.write(`<script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
+      doc.write(`<script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${this.componentScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
       doc.write(finalHtml);
       doc.close();
     } else {
@@ -542,7 +545,7 @@ class IncrementalIframeWriter {
     if (!doc) return;
 
     doc.open();
-    doc.write(`<script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
+    doc.write(`<script>${this.imageScript}<\/script><script>${this.mapScript}<\/script><script>${this.componentScript}<\/script><script>${INTERACTION_SCRIPT}<\/script><style>${INTERACTION_STYLE}</style>`);
     doc.write(html);
     doc.close();
 
@@ -567,6 +570,10 @@ class IncrementalIframeWriter {
       const mapScriptEl = doc.createElement("script");
       mapScriptEl.textContent = this.mapScript;
       (doc.body || doc.documentElement || doc).appendChild(mapScriptEl);
+
+      const compScriptEl = doc.createElement("script");
+      compScriptEl.textContent = this.componentScript;
+      (doc.body || doc.documentElement || doc).appendChild(compScriptEl);
 
       const script = doc.createElement("script");
       script.textContent = INTERACTION_SCRIPT;
@@ -798,6 +805,39 @@ function PageContent() {
       if (e.data.type === "open-image-settings") {
         setSettingsTab("image");
         setSettingsOpen(true);
+      }
+
+      // Handle <inf-component> generation requests
+      if (e.data.type === "generate-component") {
+        const compId = e.data.compId as string;
+        const compQuery = e.data.query as string;
+        const compStyle = e.data.style as string || "";
+        if (!compId || !compQuery) return;
+
+        const iframeWin = iframeRef.current?.contentWindow as Window & {
+          __infComp?: { token: (id: string, t: string) => void; done: (id: string, h: string) => void; error: (id: string) => void };
+        };
+        if (!iframeWin?.__infComp) return;
+
+        const lang = navigator.language || "en";
+
+        // Fire-and-forget async — each component generates independently
+        (async () => {
+          try {
+            const html = await streamComponentContent(
+              compQuery,
+              compStyle,
+              (token: string) => {
+                try { iframeWin.__infComp?.token(compId, token); } catch { /* iframe gone */ }
+              },
+              undefined,
+              lang
+            );
+            try { iframeWin.__infComp?.done(compId, html); } catch { /* ignore */ }
+          } catch {
+            try { iframeWin.__infComp?.error(compId); } catch { /* ignore */ }
+          }
+        })();
       }
     };
 
