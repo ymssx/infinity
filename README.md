@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<h1 align="center">∞<br>Infinity</h1>
 
-## Getting Started
+<p align="center">
+  <strong>Infinite Web Exploration Engine</strong><br>
+  AI conversation, reimagined as web surfing.
+</p>
 
-First, run the development server:
+<p align="center">
+  <a href="https://ymssx.github.io/infinity/">✦ Try it now → ymssx.github.io/infinity</a>
+</p>
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What if AI didn't reply in text — but in web pages?
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Infinity turns every AI answer into a **fully designed, interactive webpage** — with real hyperlinks, rich visuals, and bold typography. It feels less like chatting with a bot and more like surfing a living internet that writes itself for you, in real-time.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Ask anything.** Get a stunning page.  
+**Click any link.** A new page is born, going deeper.  
+**Highlight text.** Ask follow-ups about exactly what caught your eye.  
+**Leave annotations.** Revise the page with inline comments.  
+**Repeat forever.** Every page is a node in an infinite exploration tree.
 
-## Learn More
+There is no dead end. Just rabbit holes all the way down.
 
-To learn more about Next.js, take a look at the following resources:
+## Why pages, not messages?
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+A chat message is flat. A webpage is alive.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+When AI responds with a webpage, it can use **layout** to organize ideas, **color** to set the mood, **typography** to create hierarchy, and **hyperlinks** to connect concepts. Information becomes spatial, navigable, explorable — not just scrollable.
 
-## Deploy on Vercel
+And when every link generates a new page that knows your full journey — what you've read, what you've clicked, what you've highlighted — the result is something that feels like the web was always meant to be: **a conversation that you can walk through**.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## The experience
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **You ask a question** — anything at all
+2. **A webpage streams in** — rendered live, character by character, like watching a page load
+3. **You explore** — click links to go deeper, highlight text to ask about details
+4. **The AI remembers** — each new page builds on everything you've seen before
+5. **You refine** — enter revision mode, annotate directly on the page, regenerate with your feedback
+6. **The tree grows** — your exploration history forms a branching tree you can revisit anytime
+
+## Design principles
+
+- **Pages over messages.** Richer medium, richer answers.
+- **Links over buttons.** Navigation should feel like the web, not an app.
+- **Context over repetition.** The AI knows your journey and never starts from scratch.
+- **Your keys, your browser.** Pure frontend. Nothing touches a server. Your API keys stay on your device.
+
+## Getting started
+
+Visit **[ymssx.github.io/infinity](https://ymssx.github.io/infinity/)**, click ⚙️ Settings, add your API key, and start exploring.
+
+Supports OpenAI, DeepSeek, Claude (via OpenRouter), Gemini, Qwen, Doubao, Zhipu GLM, or any OpenAI-compatible endpoint.
+
+---
+
+<p align="center"><em>The web is infinite. Now your conversations are too.</em></p>
