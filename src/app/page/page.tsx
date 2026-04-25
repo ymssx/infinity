@@ -249,11 +249,44 @@ const INTERACTION_SCRIPT = `
       closeBtn.onmouseleave = function() { closeBtn.style.opacity = '0.6'; };
       bubble.appendChild(closeBtn);
 
-      bubble.onclick = function() {
+      // Only ✕ button triggers delete, not the whole bubble
+      closeBtn.onclick = function(ev) {
+        ev.stopPropagation();
         window.parent.postMessage({ type: 'iframe-delete-comment', rcId: rcId }, '*');
       };
+
+      // Hover: highlight all overlays of the same group
+      function highlightGroup(bright) {
+        var ovs = document.querySelectorAll('[data-rc-overlay="' + rcId + '"]');
+        for (var oi = 0; oi < ovs.length; oi++) {
+          ovs[oi].style.background = bright ? 'rgba(251,191,36,0.55)' : 'rgba(251,191,36,0.3)';
+        }
+      }
+      bubble.onmouseenter = function() { highlightGroup(true); };
+      bubble.onmouseleave = function() { highlightGroup(false); };
+
       document.body.appendChild(bubble);
     }
+
+    // Also add hover listeners to overlay rects
+    (function(id) {
+      function highlightGroup(bright) {
+        var ovs = document.querySelectorAll('[data-rc-overlay="' + id + '"]');
+        for (var oi = 0; oi < ovs.length; oi++) {
+          ovs[oi].style.background = bright ? 'rgba(251,191,36,0.55)' : 'rgba(251,191,36,0.3)';
+        }
+        var bubs = document.querySelectorAll('[data-rc-bubble="' + id + '"]');
+        for (var bi = 0; bi < bubs.length; bi++) {
+          bubs[bi].style.background = bright ? '#047857' : '#059669';
+        }
+      }
+      var ovs = document.querySelectorAll('[data-rc-overlay="' + id + '"]');
+      for (var oi = 0; oi < ovs.length; oi++) {
+        ovs[oi].style.pointerEvents = 'auto';
+        ovs[oi].onmouseenter = function() { highlightGroup(true); };
+        ovs[oi].onmouseleave = function() { highlightGroup(false); };
+      }
+    })(rcId);
 
     var sel = window.getSelection();
     if (sel) sel.removeAllRanges();
