@@ -49,6 +49,8 @@ export function buildComponentScript(): string {
       if (!this._query) return;
 
       this.style.display = 'block';
+      this.style.width = this.style.width || '100%';
+      this.style.minWidth = '0';
       this.style.position = 'relative';
       this.style.overflow = 'hidden';
       this.style.minHeight = this.style.minHeight || '120px';
@@ -97,11 +99,12 @@ export function buildComponentScript(): string {
         onDone: function(html) {
           if (rafId !== null) cancelAnimationFrame(rafId);
           var final = html || buffer;
-          if (contentEl) {
-            contentEl.innerHTML = final;
-          } else {
-            self.innerHTML = final || '<div style="padding:12px;color:rgba(99,102,241,0.5);font-size:12px;text-align:center;">No content generated</div>';
-          }
+          // Write directly to self, removing the contentEl wrapper
+          self.style.position = '';
+          self.style.minHeight = '';
+          self.style.overflow = '';
+          self.innerHTML = final || '<div style="padding:12px;color:rgba(99,102,241,0.5);font-size:12px;text-align:center;">No content generated</div>';
+          contentEl = null;
         },
         onError: function() {
           if (rafId !== null) cancelAnimationFrame(rafId);
