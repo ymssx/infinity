@@ -67,13 +67,20 @@ export function buildComponentScript(): string {
       var started = false;
       var contentEl = null;
       var rafId = null;
+      var needsRender = false;
+
+      function doRender() {
+        if (!contentEl) return;
+        contentEl.innerHTML = buffer;
+        needsRender = false;
+      }
 
       function scheduleRender() {
+        needsRender = true;
         if (rafId !== null) return;
         rafId = requestAnimationFrame(function() {
           rafId = null;
-          if (!contentEl) return;
-          contentEl.innerHTML = buffer;
+          if (needsRender) doRender();
         });
       }
 
@@ -98,8 +105,11 @@ export function buildComponentScript(): string {
         },
         onDone: function(html) {
           if (rafId !== null) cancelAnimationFrame(rafId);
-          var final = html || buffer;
-          // Write directly to self, removing the contentEl wrapper
+          rafId = null;
+          // Use the passed-in complete html if available, otherwise fall back to buffer
+          var final = html && html.length > 0 ? html : buffer;
+          // If final is shorter than buffer (e.g. stripCodeFence trimmed valid content), prefer buffer
+          if (buffer.length > final.length) final = buffer;
           self.style.position = '';
           self.style.minHeight = '';
           self.style.overflow = '';
