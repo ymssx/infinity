@@ -150,6 +150,132 @@ const INTERACTION_SCRIPT = `
       return;
     }
 
+    // Insert an <inf-component> after the selection's last block element,
+    // with overlay highlights that follow DOM reflows via MutationObserver.
+    if (e.data.type === 'insert-inline-component') {
+      var inlineQuery = e.data.query;
+      var inlineId = e.data.inlineId;
+      if (!_lastRange || !inlineQuery) return;
+
+      var range = _lastRange;
+
+      // 1) Wrap selected text nodes with <inf-highlight> (inline, no style impact)
+      var textNodes2 = [];
+      var startN = range.startContainer;
+      var endN = range.endContainer;
+      if (startN === endN && startN.nodeType === 3) {
+        textNodes2.push({ node: startN, start: range.startOffset, end: range.endOffset });
+      } else {
+        var tw3 = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_TEXT);
+        var inR = false;
+        while (tw3.nextNode()) {
+          var tn2 = tw3.currentNode;
+          if (tn2 === startN) {
+            inR = true;
+            textNodes2.push({ node: tn2, start: range.startOffset, end: tn2.textContent.length });
+          } else if (tn2 === endN) {
+            textNodes2.push({ node: tn2, start: 0, end: range.endOffset });
+            break;
+          } else if (inR) {
+            textNodes2.push({ node: tn2, start: 0, end: tn2.textContent.length });
+          }
+        }
+      }
+
+      // Wrap from last to first to preserve offsets
+      for (var wi = textNodes2.length - 1; wi >= 0; wi--) {
+        var info2 = textNodes2[wi];
+        var txt2 = info2.node.textContent.slice(info2.start, info2.end);
+        if (!txt2.trim()) continue;
+        info2.node.splitText(info2.end);
+        var selNode2 = info2.node.splitText(info2.start);
+        var hl = document.createElement('inf-highlight');
+        hl.setAttribute('data-inline-id', inlineId);
+        hl.style.cssText = 'display:inline;';  // pure inline, no visual change
+        selNode2.parentNode.replaceChild(hl, selNode2);
+        hl.appendChild(selNode2);
+      }
+
+      // 2) Find the LAST highlight element's nearest block ancestor for insertion
+      var blockTags2 = ['P','DIV','H1','H2','H3','H4','H5','H6','LI','SECTION','ARTICLE','BLOCKQUOTE','TD','TH','HEADER','FOOTER','MAIN','FIGURE','FIGCAPTION'];
+      var allHl = document.querySelectorAll('inf-highlight[data-inline-id="' + inlineId + '"]');
+      var lastHl = allHl.length > 0 ? allHl[allHl.length - 1] : null;
+      var block2 = lastHl;
+      if (block2) {
+        while (block2 && block2 !== document.body) {
+          if (block2.nodeType === 1 && blockTags2.indexOf(block2.tagName) !== -1) break;
+          block2 = block2.parentNode;
+        }
+        if (!block2 || block2 === document.body) block2 = lastHl.parentNode;
+      }
+
+      // 3) Create overlay divs that track <inf-highlight> positions
+      function syncOverlays(id) {
+        // Remove old overlays
+        var old = document.querySelectorAll('[data-inline-overlay="' + id + '"]');
+        for (var oi = 0; oi < old.length; oi++) old[oi].remove();
+        // Recreate from anchor elements
+        var anchors = document.querySelectorAll('inf-highlight[data-inline-id="' + id + '"]');
+        for (var ai = 0; ai < anchors.length; ai++) {
+          var aRects = anchors[ai].getClientRects();
+          for (var ri = 0; ri < aRects.length; ri++) {
+            var ar = aRects[ri];
+            if (ar.width < 1 || ar.height < 1) continue;
+            var ov2 = document.createElement('div');
+            ov2.setAttribute('data-inline-overlay', id);
+            ov2.style.cssText = 'position:absolute;pointer-events:none;z-index:0;'
+              + 'left:' + (ar.left + window.scrollX) + 'px;'
+              + 'top:' + (ar.top + window.scrollY) + 'px;'
+              + 'width:' + ar.width + 'px;'
+              + 'height:' + ar.height + 'px;'
+              + 'background:rgba(251,191,36,0.25);border-radius:2px;';
+            document.body.appendChild(ov2);
+          }
+        }
+      }
+
+      // Initial overlay render
+      syncOverlays(inlineId);
+
+      // 4) MutationObserver + rAF to re-sync overlays on DOM changes
+      var _syncRaf = null;
+      var scheduleSync = function() {
+        if (_syncRaf !== null) return;
+        _syncRaf = requestAnimationFrame(function() {
+          _syncRaf = null;
+          // Check if anchors still exist
+          var remaining = document.querySelectorAll('inf-highlight[data-inline-id="' + inlineId + '"]');
+          if (remaining.length === 0) {
+            // Cleanup: remove overlays and disconnect
+            var leftover = document.querySelectorAll('[data-inline-overlay="' + inlineId + '"]');
+            for (var li = 0; li < leftover.length; li++) leftover[li].remove();
+            obsInline.disconnect();
+            return;
+          }
+          syncOverlays(inlineId);
+        });
+      };
+      var obsInline = new MutationObserver(function() { scheduleSync(); });
+      obsInline.observe(document.documentElement || document, { childList: true, subtree: true, attributes: true, characterData: true });
+
+      // 5) Insert inf-component after the last block
+      var comp = document.createElement('inf-component');
+      comp.setAttribute('query', inlineQuery);
+      comp.setAttribute('data-inline-id', inlineId);
+      comp.style.cssText = 'margin:12px 0;';
+      if (block2 && block2.parentNode) {
+        block2.parentNode.insertBefore(comp, block2.nextSibling);
+      }
+
+      var sel = window.getSelection();
+      if (sel) sel.removeAllRanges();
+      _lastRange = null;
+
+      // Scroll into view
+      setTimeout(function() { comp.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 200);
+      return;
+    }
+
     if (e.data.type !== 'highlight-selection') return;
     var comment = e.data.comment;
     var rcId = e.data.rcId;
@@ -860,17 +986,32 @@ function PageContent() {
           try {
             const doc = iframeRef.current?.contentDocument;
             if (doc?.documentElement) {
-              // Replace <inf-component> with <div> so cached HTML won't re-trigger generation
-              doc.querySelectorAll("inf-component").forEach((el) => {
+              // Replace non-inline <inf-component> with <div> so cached HTML won't re-trigger generation
+              doc.querySelectorAll("inf-component:not([data-inline-id])").forEach((el) => {
                 const div = doc.createElement("div");
                 div.innerHTML = el.innerHTML;
-                // Copy class and style
                 if (el.getAttribute("class")) div.setAttribute("class", el.getAttribute("class")!);
                 if (el.getAttribute("style")) div.setAttribute("style", el.getAttribute("style")!);
                 el.parentNode?.replaceChild(div, el);
               });
 
-              const finalDom = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+              // Clone DOM for caching, then strip inline-explain artifacts from the clone
+              const clone = doc.documentElement.cloneNode(true) as HTMLElement;
+              // Remove inline explain components
+              clone.querySelectorAll("[data-inline-id]").forEach((el) => el.remove());
+              // Remove inline highlight overlays
+              clone.querySelectorAll("[data-inline-overlay]").forEach((el) => el.remove());
+              // Unwrap <inf-highlight> back to plain text
+              clone.querySelectorAll("inf-highlight").forEach((el) => {
+                const parent = el.parentNode;
+                if (parent) {
+                  while (el.firstChild) parent.insertBefore(el.firstChild, el);
+                  parent.removeChild(el);
+                  parent.normalize();
+                }
+              });
+
+              const finalDom = "<!DOCTYPE html>\n" + clone.outerHTML;
               finalHtmlRef.current = finalDom;
               savePage({
                 id: pageId,
@@ -927,6 +1068,43 @@ function PageContent() {
     setSelectionRect(null);
     setSelectionQuery("");
   }, [selectionQuery, selectionCtx, pageId]);
+
+  // Inline explain: insert <inf-component> after the selected block in the iframe
+  const handleInlineExplain = useCallback((directQuery?: string) => {
+    const trimmed = (directQuery ?? selectionQuery).trim();
+    if (!trimmed || !selectionCtx) return;
+
+    // Get page context (title + summary) so the inline explanation stays on-topic
+    let pageTitle = query;
+    let pageSummary = "";
+    try {
+      const doc = iframeRef.current?.contentDocument;
+      if (doc) {
+        pageTitle = doc.title || query;
+        pageSummary = (doc.querySelector('meta[name="page-summary"]') as HTMLMetaElement)?.content || "";
+      }
+    } catch { /* ignore */ }
+
+    const inlineId = `inline-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const contextParts: string[] = [];
+    contextParts.push(`Page topic: ${pageTitle}`);
+    if (pageSummary) contextParts.push(`Page summary: ${pageSummary}`);
+    contextParts.push(`Selected text: "${selectionCtx.selected.slice(0, 300)}${selectionCtx.selected.length > 300 ? "…" : ""}"`);
+    contextParts.push(`User question: ${trimmed}`);
+    const fullQuery = contextParts.join("\n\n");
+
+    try {
+      iframeRef.current?.contentWindow?.postMessage({
+        type: "insert-inline-component",
+        query: fullQuery,
+        inlineId,
+      }, "*");
+    } catch { /* ignore */ }
+
+    setSelectionCtx(null);
+    setSelectionRect(null);
+    setSelectionQuery("");
+  }, [selectionQuery, selectionCtx, query]);
 
   // Add a revision comment (revision mode)
   const handleAddRevisionComment = useCallback(() => {
@@ -1029,6 +1207,17 @@ function PageContent() {
           }
           a.innerHTML = el.innerHTML;
           el.parentNode?.replaceChild(a, el);
+        });
+        // Strip inline-explain artifacts
+        clone.querySelectorAll("[data-inline-id]").forEach((el) => el.remove());
+        clone.querySelectorAll("[data-inline-overlay]").forEach((el) => el.remove());
+        clone.querySelectorAll("inf-highlight").forEach((el) => {
+          const parent = el.parentNode;
+          if (parent) {
+            while (el.firstChild) parent.insertBefore(el.firstChild, el);
+            parent.removeChild(el);
+            parent.normalize();
+          }
         });
         annotatedHtml = "<!DOCTYPE html>\n" + clone.outerHTML;
       }
@@ -1316,7 +1505,19 @@ function PageContent() {
     try {
       const doc = iframeRef.current?.contentDocument;
       if (doc?.documentElement) {
-        html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+        const clone = doc.documentElement.cloneNode(true) as HTMLElement;
+        // Strip inline-explain artifacts
+        clone.querySelectorAll("[data-inline-id]").forEach((el) => el.remove());
+        clone.querySelectorAll("[data-inline-overlay]").forEach((el) => el.remove());
+        clone.querySelectorAll("inf-highlight").forEach((el) => {
+          const parent = el.parentNode;
+          if (parent) {
+            while (el.firstChild) parent.insertBefore(el.firstChild, el);
+            parent.removeChild(el);
+            parent.normalize();
+          }
+        });
+        html = "<!DOCTYPE html>\n" + clone.outerHTML;
       }
     } catch { /* cross-origin fallback */ }
 
@@ -1496,21 +1697,21 @@ function PageContent() {
                 )}
               </div>
             ) : (
-              /* ── Normal mode: explore shortcuts + custom input ── */
+              /* ── Normal mode: inline shortcuts + custom input with dual actions ── */
               <>
                 <div className="flex flex-wrap gap-1.5 mb-2.5">
                   {selectionShortcuts.map((s) => (
                     <button
                       key={s.label}
-                      onClick={() => handleSelectionSubmit(s.query)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white/70 backdrop-blur-sm border border-gray-200/60 text-gray-600 hover:bg-indigo-50/80 hover:text-indigo-600 hover:border-indigo-200/60 transition-all active:scale-95 cursor-pointer"
+                      onClick={() => handleInlineExplain(s.query)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white/70 backdrop-blur-sm border border-gray-200/60 text-gray-600 hover:bg-amber-50/80 hover:text-amber-600 hover:border-amber-200/60 transition-all active:scale-95 cursor-pointer"
                     >
                       <span>{s.icon}</span>
                       <span>{s.label}</span>
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <input
                     ref={selectionInputRef}
                     type="text"
@@ -1519,18 +1720,27 @@ function PageContent() {
                     onCompositionStart={() => { isComposingRef.current = true; }}
                     onCompositionEnd={() => { isComposingRef.current = false; }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isComposingRef.current) handleSelectionSubmit();
+                      if (e.key === "Enter" && !isComposingRef.current) handleInlineExplain();
                       if (e.key === "Escape") {
                         setSelectionCtx(null);
                         setSelectionRect(null);
                       }
                     }}
-                    placeholder="Or type a custom question..."
+                    placeholder="Ask about this..."
                     className="flex-1 bg-white/50 backdrop-blur-sm rounded-xl px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-300/40 border border-white/60 min-w-0"
                   />
                   <button
+                    onClick={() => handleInlineExplain()}
+                    disabled={!selectionQuery.trim()}
+                    title="Explain inline"
+                    className="shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-amber-500/90 backdrop-blur-sm text-white transition-all hover:bg-amber-600 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-sm"
+                  >
+                    ⚡️
+                  </button>
+                  <button
                     onClick={() => handleSelectionSubmit()}
                     disabled={!selectionQuery.trim()}
+                    title="Open in new page"
                     className="shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-indigo-500/90 backdrop-blur-sm text-white transition-all hover:bg-indigo-600 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
