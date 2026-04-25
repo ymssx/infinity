@@ -134,7 +134,7 @@ Broader related topics the user might want to jump to next. These should feel li
 - Style them creatively — pill buttons, card links, styled tags, underlined inline — matching the page aesthetic.
 
 ## NAVIGATION
-Top of page: a compact nav with "∞" linking to "/" and a short page title.
+Top of page: a compact nav with "∞" linking to "/" (href="/") and a short page title.
 
 ## PAGE SUMMARY (MANDATORY)
 Every page MUST include a \`<meta name="page-summary">\` tag in \`<head>\`.

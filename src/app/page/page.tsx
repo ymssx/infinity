@@ -266,6 +266,9 @@ function PageContent() {
       } catch { /* ignore */ }
     } else if (href.startsWith("http://") || href.startsWith("https://")) {
       window.open(href, "_blank", "noopener,noreferrer");
+    } else if (href === "/" || href === "") {
+      // Home link — navigate to homepage with basePath
+      window.location.href = `${getBasePath()}/`;
     } else {
       // Handle /search?q=... links by generating a new pageId client-side
       let targetHref = href;
@@ -739,6 +742,16 @@ function PageContent() {
             ${capsuleExpanded ? "w-[560px] px-5 py-3" : "w-auto max-w-[320px] px-3 py-2"}
           `}
         >
+          {/* Home button */}
+          <a
+            href={`${getBasePath()}/`}
+            title="返回首页"
+            className="shrink-0 text-indigo-400 hover:text-indigo-600 transition-colors font-serif text-lg leading-none px-1 cursor-pointer"
+          >
+            ∞
+          </a>
+          <div className="w-px h-4 bg-gray-200 mx-1 shrink-0" />
+
           {/* Search icon */}
           <svg className={`${capsuleExpanded ? "h-5 w-5" : "h-3.5 w-3.5"} text-gray-600 shrink-0 transition-all`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" />
