@@ -615,7 +615,7 @@ function PageContent() {
 
   // Capsule state
   const capsuleRef = useRef<HTMLDivElement>(null);
-  const capsuleInputRef = useRef<HTMLInputElement>(null);
+  const capsuleInputRef = useRef<HTMLTextAreaElement>(null);
   const [capsuleExpanded, setCapsuleExpanded] = useState(false);
   const [capsuleQuery, setCapsuleQuery] = useState(query);
   const isComposingRef = useRef(false);
@@ -1559,7 +1559,7 @@ function PageContent() {
         >
           {/* Row 1: Input (only when expanded/revision) */}
           {(capsuleExpanded || revisionMode) && (
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-start gap-2 mb-2">
               {revisionMode ? (
                 <input
                   type="text"
@@ -1576,19 +1576,18 @@ function PageContent() {
                 />
               ) : (
                 <>
-                  <input
+                  <textarea
                     ref={capsuleInputRef}
-                    type="text"
                     value={capsuleQuery}
                     onChange={(e) => setCapsuleQuery(e.target.value)}
                     onCompositionStart={() => { isComposingRef.current = true; }}
                     onCompositionEnd={() => { isComposingRef.current = false; }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isComposingRef.current) handleCapsuleSubmit();
                       if (e.key === "Escape") { setCapsuleExpanded(false); setCapsuleQuery(query); }
                     }}
                     placeholder="Ask a new question..."
-                    className="flex-1 bg-gray-50/80 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-200/50 border border-gray-200/60 min-w-0"
+                    rows={3}
+                    className="flex-1 bg-gray-50/80 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-200/50 border border-gray-200/60 min-w-0 resize-none"
                   />
                   <button
                     onClick={handleCapsuleSubmit}
