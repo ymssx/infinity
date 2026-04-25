@@ -309,12 +309,20 @@ const INTERACTION_SCRIPT = `
       return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
     }
 
-    // Parse rgba with alpha support
+    // Parse rgba — no regex to avoid template string escaping issues
     function parseRGBA(str) {
       if (!str || str === 'transparent') return null;
-      var m = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/);
-      if (!m) return null;
-      return { r: +m[1], g: +m[2], b: +m[3], a: m[4] !== undefined ? +m[4] : 1 };
+      var i = str.indexOf('(');
+      var j = str.lastIndexOf(')');
+      if (i === -1 || j === -1) return null;
+      var parts = str.slice(i + 1, j).split(',');
+      if (parts.length < 3) return null;
+      return {
+        r: parseInt(parts[0], 10) || 0,
+        g: parseInt(parts[1], 10) || 0,
+        b: parseInt(parts[2], 10) || 0,
+        a: parts.length >= 4 ? parseFloat(parts[3]) : 1
+      };
     }
 
     // Composite fg color over bg color using alpha blending
