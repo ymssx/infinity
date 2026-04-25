@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { savePage, getPage as getCachedPage, clearPageHtml, buildAncestryContext } from "@/lib/client-store";
 import { SelectionContext } from "@/types";
-import { isConfigured } from "@/lib/config";
+import { isConfigured, getBasePath } from "@/lib/config";
 import { streamGeneratePage } from "@/lib/openai";
 
 // ============================================================
@@ -275,7 +275,7 @@ function PageContent() {
           const q = url.searchParams.get("q");
           if (q) {
             const newPageId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-            const dest = new URL(`/page`, window.location.origin);
+            const dest = new URL(`${getBasePath()}/page`, window.location.origin);
             dest.searchParams.set("id", newPageId);
             dest.searchParams.set("q", q);
             dest.searchParams.set("parentId", pageId);
@@ -391,7 +391,7 @@ function PageContent() {
     const newPageId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     const sc = encodeURIComponent(JSON.stringify(selectionCtx));
     window.open(
-      `/page?id=${newPageId}&q=${encodeURIComponent(trimmed)}&parentId=${encodeURIComponent(pageId)}&sc=${sc}`,
+      `${getBasePath()}/page?id=${newPageId}&q=${encodeURIComponent(trimmed)}&parentId=${encodeURIComponent(pageId)}&sc=${sc}`,
       "_blank",
       "noopener,noreferrer"
     );
@@ -586,7 +586,7 @@ function PageContent() {
     if (!trimmed || trimmed === query) return;
     const newPageId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     window.open(
-      `/page?id=${newPageId}&q=${encodeURIComponent(trimmed)}&parentId=${encodeURIComponent(pageId)}`,
+      `${getBasePath()}/page?id=${newPageId}&q=${encodeURIComponent(trimmed)}&parentId=${encodeURIComponent(pageId)}`,
       "_blank",
       "noopener,noreferrer"
     );
@@ -623,14 +623,14 @@ function PageContent() {
           {!configured ? (
             <>
               <p className="text-gray-400 mb-4">请先配置 API Key</p>
-              <a href="/" className="text-indigo-500 hover:text-indigo-600 text-sm">
+              <a href={`${getBasePath()}/`} className="text-indigo-500 hover:text-indigo-600 text-sm">
                 ← 返回首页设置
               </a>
             </>
           ) : (
             <>
               <p className="text-gray-400 mb-4">加载失败，请返回重试</p>
-              <a href="/" className="text-indigo-500 hover:text-indigo-600 text-sm">
+              <a href={`${getBasePath()}/`} className="text-indigo-500 hover:text-indigo-600 text-sm">
                 ← 返回首页
               </a>
             </>

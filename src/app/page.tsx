@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { buildSessionTrees, clearAllPages, TreeNode } from "@/lib/client-store";
-import { isConfigured } from "@/lib/config";
+import { isConfigured, getBasePath } from "@/lib/config";
 import SettingsModal from "@/components/SettingsModal";
 
 const examples = [
@@ -28,7 +28,7 @@ function TreeNodeItem({ node, depth = 0 }: { node: TreeNode; depth?: number }) {
   const displayTitle = node.title || node.query;
 
   const handleClick = () => {
-    const url = `/page?id=${encodeURIComponent(node.id)}&q=${encodeURIComponent(node.query)}${node.parentId ? `&parentId=${encodeURIComponent(node.parentId)}` : ""}`;
+    const url = `${getBasePath()}/page?id=${encodeURIComponent(node.id)}&q=${encodeURIComponent(node.query)}${node.parentId ? `&parentId=${encodeURIComponent(node.parentId)}` : ""}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -132,7 +132,7 @@ export default function HomePage() {
 
     setIsNavigating(true);
     const pageId = generateId();
-    window.location.href = `/page?id=${pageId}&q=${encodeURIComponent(text)}`;
+    window.location.href = `${getBasePath()}/page?id=${pageId}&q=${encodeURIComponent(text)}`;
   };
 
   const handleClearHistory = useCallback(() => {

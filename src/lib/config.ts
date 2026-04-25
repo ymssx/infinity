@@ -134,3 +134,8 @@ export function isConfigured(): boolean {
   const config = getConfig();
   return !!config.openaiApiKey;
 }
+
+/** Get Next.js basePath for constructing URLs in client-side navigation */
+export function getBasePath(): string {
+  return process.env.NEXT_PUBLIC_BASE_PATH || "";
+}
