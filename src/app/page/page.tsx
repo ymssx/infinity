@@ -294,6 +294,110 @@ const INTERACTION_SCRIPT = `
     if (sel) sel.removeAllRanges();
     _lastRange = null;
   });
+
+  // ── Auto-fix low-contrast text (real-time via MutationObserver) ──
+  // Watches for new DOM nodes during streaming and checks text contrast immediately.
+  (function() {
+    function luminance(r, g, b) {
+      var a = [r, g, b].map(function(v) {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+    }
+
+    function parseColor(str) {
+      if (!str || str === 'transparent' || str === 'rgba(0, 0, 0, 0)') return null;
+      var m = str.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
+      if (m) return { r: +m[1], g: +m[2], b: +m[3] };
+      return null;
+    }
+
+    function contrastRatio(fg, bg) {
+      var l1 = luminance(fg.r, fg.g, fg.b) + 0.05;
+      var l2 = luminance(bg.r, bg.g, bg.b) + 0.05;
+      return l1 > l2 ? l1 / l2 : l2 / l1;
+    }
+
+    function getEffectiveBg(el) {
+      var node = el;
+      while (node && node !== document.documentElement) {
+        var bg = getComputedStyle(node).backgroundColor;
+        var c = parseColor(bg);
+        if (c) return c;
+        node = node.parentElement;
+      }
+      return { r: 255, g: 255, b: 255 };
+    }
+
+    function isLight(c) {
+      return luminance(c.r, c.g, c.b) > 0.179;
+    }
+
+    var TEXT_TAGS = {H1:1,H2:1,H3:1,H4:1,H5:1,H6:1,P:1,SPAN:1,A:1,LI:1,TD:1,TH:1,LABEL:1,DIV:1,BLOCKQUOTE:1,FIGCAPTION:1,DT:1,DD:1,SUMMARY:1,CAPTION:1,STRONG:1,EM:1,B:1,I:1,SMALL:1};
+    var _checked = new WeakSet();
+
+    function checkEl(el) {
+      if (!TEXT_TAGS[el.tagName] || _checked.has(el)) return;
+      // Must have direct text content
+      var hasText = false;
+      for (var ci = 0; ci < el.childNodes.length; ci++) {
+        if (el.childNodes[ci].nodeType === 3 && el.childNodes[ci].textContent.trim()) { hasText = true; break; }
+      }
+      if (!hasText) return;
+      _checked.add(el);
+
+      var style = getComputedStyle(el);
+      // Skip gradient text
+      if (style.webkitBackgroundClip === 'text' || style.backgroundClip === 'text') return;
+
+      var fg = parseColor(style.color);
+      if (!fg) return;
+      var bg = getEffectiveBg(el);
+      var ratio = contrastRatio(fg, bg);
+
+      if (ratio < 4.5) {
+        if (isLight(bg)) {
+          el.style.color = 'rgba(0,0,0,0.87)';
+        } else {
+          el.style.color = 'rgba(255,255,255,0.93)';
+        }
+      }
+    }
+
+    function checkTree(root) {
+      if (root.nodeType === 1) {
+        checkEl(root);
+        var els = root.querySelectorAll ? root.querySelectorAll('*') : [];
+        for (var i = 0; i < els.length; i++) checkEl(els[i]);
+      }
+    }
+
+    // Debounced batch check for mutations
+    var _pending = [];
+    var _rafId = null;
+
+    function flushCheck() {
+      _rafId = null;
+      var nodes = _pending;
+      _pending = [];
+      for (var i = 0; i < nodes.length; i++) checkTree(nodes[i]);
+    }
+
+    var observer = new MutationObserver(function(mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var added = mutations[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          _pending.push(added[j]);
+        }
+      }
+      if (_pending.length > 0 && _rafId === null) {
+        _rafId = requestAnimationFrame(flushCheck);
+      }
+    });
+
+    observer.observe(document.documentElement || document, { childList: true, subtree: true });
+  })();
 `;
 
 const INTERACTION_STYLE = "body{padding-bottom:60px!important;} ::selection{background:rgba(99,102,241,0.25);}";

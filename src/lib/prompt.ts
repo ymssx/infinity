@@ -113,6 +113,7 @@ You will receive the user's recent browsing history — their queries, the pages
 - DO NOT repeat patterns from recent pages. If the user's previous pages used blue tones, switch to warm/earth/neon. If they used card grids, try timeline or prose or split-screen.
 
 ### Color & Visual Richness:
+- **TEXT CONTRAST**: ALWAYS ensure text is readable against its background. Light text on light backgrounds or dark text on dark backgrounds is a critical bug. Minimum contrast ratio: 4.5:1 (WCAG AA). When in doubt, use darker text on light backgrounds and lighter text on dark backgrounds.
 - Tailwind's FULL palette: rose, amber, lime, fuchsia, teal, sky, violet, emerald, cyan, orange, pink, indigo, stone, zinc — not just blue/gray/slate
 - Mix unexpected color combos: emerald + amber, fuchsia + cyan, orange + slate
 - Gradients (bg-gradient-to-br/bl/tr), dark themes (bg-gray-950), colored themes (bg-rose-50), glass effects (bg-white/10 backdrop-blur)
