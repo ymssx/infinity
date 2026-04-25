@@ -903,10 +903,10 @@ function PageContent() {
 
   // Quick-action shortcuts for selection popup
   const selectionShortcuts = [
-    { label: "解释一下", icon: "💡", query: "解释一下这段内容" },
-    { label: "深入展开", icon: "🔍", query: "深入展开讲讲这部分" },
-    { label: "举个例子", icon: "📝", query: "举个具体的例子" },
-    { label: "翻译", icon: "🌐", query: "翻译这段内容为中文（如已是中文则翻译为英文）" },
+    { label: "Explain", icon: "💡", query: "Explain this content" },
+    { label: "Go deeper", icon: "🔍", query: "Go deeper into this topic" },
+    { label: "Example", icon: "📝", query: "Give a concrete example" },
+    { label: "Translate", icon: "🌐", query: "Translate this text (if in English, translate to Chinese; if in Chinese, to English)" },
   ];
 
   useEffect(() => {
@@ -975,7 +975,7 @@ function PageContent() {
           undefined, // no prefetched data
           urlSelectionContext,
           abortController.signal,
-          { width: window.innerWidth, mobile: window.innerWidth < 640 }
+          { width: window.innerWidth, mobile: window.innerWidth < 640, lang: navigator.language || "en" }
         );
 
         if (cancelled) return;
@@ -1124,16 +1124,16 @@ function PageContent() {
           <p className="text-3xl text-indigo-400/40 mb-4">∞</p>
           {!configured ? (
             <>
-              <p className="text-gray-400 mb-4">请先配置 API Key</p>
+              <p className="text-gray-400 mb-4">Please configure your API Key first</p>
               <a href={`${getBasePath()}/`} className="text-indigo-500 hover:text-indigo-600 text-sm">
-                ← 返回首页设置
+                ← Back to Home
               </a>
             </>
           ) : (
             <>
-              <p className="text-gray-400 mb-4">加载失败，请返回重试</p>
+              <p className="text-gray-400 mb-4">Failed to load. Please go back and try again.</p>
               <a href={`${getBasePath()}/`} className="text-indigo-500 hover:text-indigo-600 text-sm">
-                ← 返回首页
+                ← Back to Home
               </a>
             </>
           )}
@@ -1199,7 +1199,7 @@ function PageContent() {
                         setSelectionRect(null);
                       }
                     }}
-                    placeholder="输入修订意见..."
+                    placeholder="Add revision comment..."
                     className="flex-1 bg-amber-50/80 backdrop-blur-sm rounded-xl px-3 py-2 text-sm text-gray-800 placeholder-amber-400/70 outline-none focus:ring-2 focus:ring-amber-300/40 border border-amber-200/60 min-w-0"
                   />
                   <button
@@ -1263,7 +1263,7 @@ function PageContent() {
                         setSelectionRect(null);
                       }
                     }}
-                    placeholder="或输入自定义问题..."
+                    placeholder="Or type a custom question..."
                     className="flex-1 bg-white/50 backdrop-blur-sm rounded-xl px-3 py-2 text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-300/40 border border-white/60 min-w-0"
                   />
                   <button
@@ -1292,7 +1292,7 @@ function PageContent() {
           className={`
             bg-white/90 backdrop-blur-2xl backdrop-saturate-150 border border-gray-200/80 shadow-[0_8px_40px_rgba(0,0,0,0.08),0_1.5px_6px_rgba(0,0,0,0.05)]
             transition-all duration-300 ease-in-out overflow-hidden mx-auto
-            ${(capsuleExpanded || revisionMode) ? "rounded-2xl px-4 py-3 w-full" : "rounded-full px-3 py-2 w-auto max-w-[320px]"}
+            ${(capsuleExpanded || revisionMode) ? "rounded-2xl px-4 py-3 w-full" : "rounded-full px-3 py-2 w-fit max-w-full"}
           `}
         >
           {/* Row 1: Input (only when expanded/revision) */}
@@ -1309,7 +1309,7 @@ function PageContent() {
                     if (e.key === "Enter" && !isComposingRef.current && (revisionComments.length > 0 || revisionPrompt.trim())) handleApplyRevision();
                     if (e.key === "Escape") { setRevisionMode(false); setRevisionComments([]); setRevisionPrompt(""); }
                   }}
-                  placeholder="输入修订要求..."
+                  placeholder="Revision instructions..."
                   className="flex-1 bg-gray-50/80 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-amber-200/50 border border-gray-200/60 min-w-0"
                 />
               ) : (
@@ -1325,7 +1325,7 @@ function PageContent() {
                       if (e.key === "Enter" && !isComposingRef.current) handleCapsuleSubmit();
                       if (e.key === "Escape") { setCapsuleExpanded(false); setCapsuleQuery(query); }
                     }}
-                    placeholder="输入新的问题..."
+                    placeholder="Ask a new question..."
                     className="flex-1 bg-gray-50/80 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-200/50 border border-gray-200/60 min-w-0"
                   />
                   <button
@@ -1347,7 +1347,7 @@ function PageContent() {
             {/* Home button */}
             <a
               href={`${getBasePath()}/`}
-              title="返回首页"
+              title="Home"
               className="shrink-0 text-indigo-400 hover:text-indigo-600 transition-colors font-serif text-lg leading-none px-1 cursor-pointer"
             >
               ∞
@@ -1379,7 +1379,7 @@ function PageContent() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
               <span className="text-xs text-gray-600 ml-1 shrink-0 whitespace-nowrap">
-                {progress > 0 ? `${Math.round(progress / 1024)}KB` : "加载中"}
+                {progress > 0 ? `${Math.round(progress / 1024)}KB` : "Loading"}
               </span>
               <div className="w-px h-4 bg-gray-300 mx-2 shrink-0" />
               <button
@@ -1389,7 +1389,7 @@ function PageContent() {
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="4" y="4" width="16" height="16" rx="2" />
                 </svg>
-                <span className="text-xs font-medium">停止</span>
+                <span className="text-xs font-medium">Stop</span>
               </button>
             </>
           )}
@@ -1411,19 +1411,19 @@ function PageContent() {
                     }
                   } catch { /* ignore */ }
                 }}
-                title="修订模式"
+                title="Revision mode"
                 className="flex items-center gap-1 text-gray-500 hover:text-amber-500 transition-colors cursor-pointer shrink-0"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-xs font-medium">修订</span>
+                <span className="text-xs font-medium">Revise</span>
               </button>
               <div className="w-px h-4 bg-gray-300 mx-2 shrink-0" />
               <button
                 onClick={handleRefresh}
-                title="重新生成此页面"
+                title="Regenerate this page"
                 className="flex items-center gap-1 text-gray-500 hover:text-indigo-500 transition-colors cursor-pointer shrink-0"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -1444,7 +1444,7 @@ function PageContent() {
                   <path d="M12 5v14M12 19l-5-5M12 19l5-5" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M4 21h16" strokeLinecap="round" />
                 </svg>
-                <span className="text-xs font-medium">保存</span>
+                <span className="text-xs font-medium">Save</span>
               </button>
             </>
           )}
@@ -1458,7 +1458,7 @@ function PageContent() {
                   <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                修订中
+                Revising
                 {revisionComments.length > 0 && (
                   <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
                     {revisionComments.length}
@@ -1469,24 +1469,24 @@ function PageContent() {
               <button
                 onClick={handleApplyRevision}
                 disabled={revisionComments.length === 0 && !revisionPrompt.trim()}
-                title="应用修订并重新生成"
+                title="Apply revisions and regenerate"
                 className="flex items-center gap-1 text-amber-600 hover:text-amber-700 transition-colors cursor-pointer shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-xs font-medium">应用</span>
+                <span className="text-xs font-medium">Apply</span>
               </button>
               <div className="w-px h-4 bg-gray-300 mx-2 shrink-0" />
               <button
                 onClick={() => { setRevisionMode(false); setRevisionComments([]); setRevisionPrompt(""); }}
-                title="退出修订模式"
+                title="Exit revision mode"
                 className="flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer shrink-0"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-xs font-medium">取消</span>
+                <span className="text-xs font-medium">Cancel</span>
               </button>
             </>
           )}
@@ -1515,7 +1515,7 @@ export default function GeneratedPage() {
     <Suspense
       fallback={
         <main className="min-h-screen bg-white flex items-center justify-center">
-          <div className="text-gray-400 text-sm">加载中...</div>
+          <div className="text-gray-400 text-sm">Loading...</div>
         </main>
       }
     >

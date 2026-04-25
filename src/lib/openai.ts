@@ -34,7 +34,7 @@ export async function streamGeneratePage(
   prefetchedData?: PrefetchedData,
   selectionContext?: SelectionContext,
   signal?: AbortSignal,
-  deviceInfo?: { width: number; mobile: boolean }
+  deviceInfo?: { width: number; mobile: boolean; lang?: string }
 ): Promise<string> {
   const client = getClient();
   const model = getModel();

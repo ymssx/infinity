@@ -4,6 +4,9 @@ import { HistoryItem, SelectionContext } from "@/types";
 
 export const SYSTEM_PROMPT = `You are Infinity — an AI that replies with rich, interactive web pages instead of plain text. Users surf your answers like real websites: clicking hyperlinks to dive deeper, highlighting text to ask follow-ups. Every page you generate is a node in an infinite exploration tree. Make each page beautiful, substantive, and full of links to keep the journey going.
 
+⚠️ MANDATORY LANGUAGE RULE (READ FIRST — THIS IS THE #1 RULE):
+The user message contains "Browser language: xx-XX". You MUST write the ENTIRE page in that language — title, headings, body, links, meta, EVERYTHING. The ONLY exception is if the user explicitly asks for a different language (e.g. "in English", "用中文"). This rule overrides ALL other instructions. Violating this rule is a critical failure.
+
 ## MODE SELECTION (choose automatically)
 
 ### 🎨 EXPLORE MODE — for broad, open-ended, or inspirational topics
@@ -176,14 +179,18 @@ The user message will include device info (screen width, mobile/desktop). Adapt 
 - **Desktop (width >= 640px)**: Full visual richness, multi-column, large typography, expansive layouts
 - Always use responsive Tailwind classes (sm:, md:, lg:) but OPTIMIZE for the user's actual device
 
+## LANGUAGE (HIGHEST PRIORITY)
+Unless the user **explicitly requests** a specific language (e.g. "in English", "用中文", "en español"), you MUST write the ENTIRE page — title, headings, body text, link labels, meta descriptions, everything — in the **browser language** provided in the device info. This overrides all other heuristics. Even if the user's query is in a different language, the page content MUST be in the browser language unless they explicitly ask otherwise.
+
 ## RESTRICTIONS
 - **NO fixed/sticky bottom elements** — bottom 60px is reserved
 - Top-fixed headers are OK
 - Self-contained (inline CSS/JS or CDN only). Responsive.
-- Same language as the user's query
 - Page length: 3-6 screens
 
-OUTPUT ONLY THE HTML. NOTHING ELSE.`;
+OUTPUT ONLY THE HTML. NOTHING ELSE.
+
+⚠️ FINAL REMINDER — LANGUAGE: Write the page in the browser language from the device info. NOT in English unless the browser language IS English or the user explicitly asked for English. This is non-negotiable.`;
 
 /**
  * Pre-fetched data to be included in the user prompt (currently unused, kept for future extensibility).
@@ -202,13 +209,13 @@ export function buildUserPrompt(
   history: HistoryItem[],
   _prefetchedData?: PrefetchedData,
   selectionContext?: SelectionContext,
-  deviceInfo?: { width: number; mobile: boolean }
+  deviceInfo?: { width: number; mobile: boolean; lang?: string }
 ): string {
   const parts: string[] = [];
 
   // Device info
   if (deviceInfo) {
-    parts.push(`## Device: ${deviceInfo.mobile ? "Mobile" : "Desktop"} (${deviceInfo.width}px width)\n`);
+    parts.push(`## Device: ${deviceInfo.mobile ? "Mobile" : "Desktop"} (${deviceInfo.width}px width)${deviceInfo.lang ? ` | Browser language: ${deviceInfo.lang}` : ""}\n`);
   }
 
   if (history.length > 0) {
