@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;ai-data&gt; — AI Components</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 antialiased">
+
+<div class="flex pt-14">
+<main class="flex-1 lg:ml-56 min-h-screen">
+  <div class="max-w-4xl mx-auto px-8 py-12 pb-32 space-y-16">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="../index.html">首页</a>
+      <span class="sep">/</span>
+      <a href="../index.html#components-preview">组件</a>
+      <span class="sep">/</span>
+      <span>&lt;ai-data&gt;</span>
+    </div>
+
+    <!-- ====== Overview ====== -->
+    <section id="overview">
+      <div class="flex items-center gap-4 mb-6">
+        <span class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">📊</span>
+        <div>
+          <h1 class="text-3xl font-extrabold text-gray-900">&lt;ai-data&gt;</h1>
+          <p class="text-gray-500 text-sm mt-1">AI 数据提供组件 — 异步获取数据，驱动其他组件</p>
+        </div>
+      </div>
+
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-8">
+        <p class="text-sm text-blue-700 leading-relaxed">
+          <code>&lt;ai-data&gt;</code> 是一个<strong>不渲染任何内容</strong>的基础设施组件。
+          它通过 LLM 异步获取结构化数据，并将数据注入到父 AI 组件的 prompt 中。
+          所有 AI 组件（<code>&lt;ai-component&gt;</code>、<code>&lt;ai-image&gt;</code>、<code>&lt;ai-map&gt;</code> 等）
+          都会在启动自己的生命周期前，先等待内部的 <code>&lt;ai-data&gt;</code> 子元素全部就绪。
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-xl p-4 border border-gray-200">
+          <div class="text-lg mb-2">🔗</div>
+          <h3 class="font-semibold text-sm mb-1">数据驱动</h3>
+          <p class="text-xs text-gray-500">先获取数据，再渲染 UI。分离数据层与展示层。</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-gray-200">
+          <div class="text-lg mb-2">🪆</div>
+          <h3 class="font-semibold text-sm mb-1">可嵌套</h3>
+          <p class="text-xs text-gray-500">ai-data 可以嵌套 ai-data，内层先完成，外层拿到内层数据后再执行。</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 border border-gray-200">
+          <div class="text-lg mb-2">👻</div>
+          <h3 class="font-semibold text-sm mb-1">零渲染</h3>
+          <p class="text-xs text-gray-500">display: none，不产生任何可见输出。纯数据层。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 核心概念 ====== -->
+    <section id="concept">
+      <h2 class="text-xl font-bold mb-4">核心概念</h2>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <h3 class="font-semibold text-sm mb-3 text-gray-700">数据流：ai-data → 父组件</h3>
+        <div class="font-mono text-xs leading-relaxed text-gray-600 bg-gray-50 rounded-lg p-4">
+          <div>1. 浏览器解析 HTML → 触发 &lt;ai-data&gt; 的 connectedCallback</div>
+          <div>2. &lt;ai-data&gt; 检查自身是否有嵌套的 &lt;ai-data&gt; 子元素</div>
+          <div class="ml-4">├─ 有 → 先等待子 &lt;ai-data&gt; 全部就绪</div>
+          <div class="ml-4">└─ 无 → 直接开始</div>
+          <div>3. 调用 LLM，用数据专用系统提示词，获取纯数据（JSON/text/CSV）</div>
+          <div>4. 清理响应 → 存储到 this.data → 触发 'ai-data-ready' 事件</div>
+          <div>5. 父组件收到事件 → 将数据注入自己的 prompt → 开始自身生命周期</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="font-semibold text-sm mb-3 text-gray-700">阻塞机制</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+          当一个 AI 组件（如 <code>&lt;ai-component&gt;</code>）检测到内部有 <code>&lt;ai-data&gt;</code> 子元素时，
+          它会<strong>暂停自己的 LLM 调用</strong>，等待所有直接子 <code>&lt;ai-data&gt;</code> 元素发出 <code>ai-data-ready</code> 事件后，
+          才将收集到的数据拼接到自己的 prompt 中并开始生成。
+        </p>
+        <p class="text-sm text-gray-500 mt-2 leading-relaxed">
+          如果没有 <code>&lt;ai-data&gt;</code> 子元素，组件行为与之前完全一致 — 零开销。
+        </p>
+      </div>
+    </section>
+
+    <!-- ====== Props ====== -->
+    <section id="props">
+      <h2 class="text-xl font-bold mb-4">属性 (Attributes)</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 rounded-xl overflow-hidden">
+          <thead>
+            <tr class="bg-gray-50 text-left">
+              <th class="px-4 py-3 font-semibold">属性</th>
+              <th class="px-4 py-3 font-semibold">类型</th>
+              <th class="px-4 py-3 font-semibold">默认值</th>
+              <th class="px-4 py-3 font-semibold">说明</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr>
+              <td class="px-4 py-3 font-mono text-indigo-600 font-medium">p</td>
+              <td class="px-4 py-3 text-gray-500">string</td>
+              <td class="px-4 py-3 text-gray-400">—</td>
+              <td class="px-4 py-3">
+                <strong>必填。</strong>自然语言描述需要的数据内容。
+                <br /><span class="text-gray-400 text-xs">示例：<code>"mock一个购物车列表数据，包含商品名、价格、数量"</code></span>
+              </td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-indigo-600 font-medium">format</td>
+              <td class="px-4 py-3 text-gray-500">string</td>
+              <td class="px-4 py-3 text-gray-400">"json"</td>
+              <td class="px-4 py-3">
+                输出格式提示：<code>"json"</code>、<code>"text"</code>、<code>"csv"</code> 等。
+                <br /><span class="text-gray-400 text-xs">LLM 默认输出 JSON，通过此属性可切换格式。</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-base font-bold mt-8 mb-3">JavaScript 属性</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 rounded-xl overflow-hidden">
+          <thead>
+            <tr class="bg-gray-50 text-left">
+              <th class="px-4 py-3 font-semibold">属性</th>
+              <th class="px-4 py-3 font-semibold">类型</th>
+              <th class="px-4 py-3 font-semibold">说明</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr>
+              <td class="px-4 py-3 font-mono text-indigo-600 font-medium">.data</td>
+              <td class="px-4 py-3 text-gray-500">string | null</td>
+              <td class="px-4 py-3">数据就绪后可通过此属性同步读取解析后的数据字符串。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-base font-bold mt-8 mb-3">事件</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 rounded-xl overflow-hidden">
+          <thead>
+            <tr class="bg-gray-50 text-left">
+              <th class="px-4 py-3 font-semibold">事件名</th>
+              <th class="px-4 py-3 font-semibold">detail 类型</th>
+              <th class="px-4 py-3 font-semibold">说明</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr>
+              <td class="px-4 py-3 font-mono text-green-600 font-medium">ai-data-ready</td>
+              <td class="px-4 py-3 text-gray-500">string</td>
+              <td class="px-4 py-3">数据成功获取后触发。<code>event.detail</code> 为解析后的数据字符串。</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-red-600 font-medium">ai-data-error</td>
+              <td class="px-4 py-3 text-gray-500">string</td>
+              <td class="px-4 py-3">数据获取失败时触发。<code>event.detail</code> 为错误消息。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====== Examples ====== -->
+    <section id="examples">
+      <h2 class="text-xl font-bold mb-6">使用示例</h2>
+
+      <!-- Example 1: Basic -->
+      <div class="space-y-8">
+        <div>
+          <h3 class="font-semibold mb-3">1. 基本用法 — 为 AI 组件提供数据</h3>
+          <p class="text-sm text-gray-500 mb-3">数据组件先获取购物车数据，然后 <code>&lt;ai-component&gt;</code> 拿到数据后再生成 UI。</p>
+          <pre class="code-block"><code>&lt;ai-component p="渲染一个购物车列表页面"&gt;
+  &lt;ai-data p="mock一个购物车数据，5件商品，包含名称、价格、数量、图片URL" /&gt;
+&lt;/ai-component&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+        </div>
+
+        <!-- Example 2: Multiple data sources -->
+        <div>
+          <h3 class="font-semibold mb-3">2. 多个数据源</h3>
+          <p class="text-sm text-gray-500 mb-3">一个组件可以包含多个 <code>&lt;ai-data&gt;</code>，所有数据全部就绪后才渲染。</p>
+          <pre class="code-block"><code>&lt;ai-component p="用户个人主页，展示用户信息和最近订单"&gt;
+  &lt;ai-data p="mock一个用户的个人资料：头像、姓名、邮箱、会员等级" /&gt;
+  &lt;ai-data p="mock该用户最近5笔订单：订单号、商品、金额、状态" /&gt;
+&lt;/ai-component&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+        </div>
+
+        <!-- Example 3: Nested ai-data -->
+        <div>
+          <h3 class="font-semibold mb-3">3. 嵌套数据 — ai-data 嵌套 ai-data</h3>
+          <p class="text-sm text-gray-500 mb-3">内层 ai-data 先获取基础数据，外层再基于它生成衍生数据。</p>
+          <pre class="code-block"><code>&lt;ai-component p="展示产品详情页"&gt;
+  &lt;ai-data p="根据以下产品基础信息，生成完整的产品详情数据，包括 SEO 描述、推荐理由、用户评价"&gt;
+    &lt;ai-data p="mock一个电子产品的基础信息：名称、品牌、价格、规格参数" /&gt;
+  &lt;/ai-data&gt;
+&lt;/ai-component&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+        </div>
+
+        <!-- Example 4: With other AI components -->
+        <div>
+          <h3 class="font-semibold mb-3">4. 配合其他 AI 组件</h3>
+          <p class="text-sm text-gray-500 mb-3"><code>&lt;ai-data&gt;</code> 可以配合任意 AI 组件使用，不仅限于 <code>&lt;ai-component&gt;</code>。</p>
+          <pre class="code-block"><code>&lt;!-- 根据数据搜索对应图片 --&gt;
+&lt;ai-image p="展示这个城市的标志性景观"&gt;
+  &lt;ai-data p="随机选一个世界著名城市，返回城市名" format="text" /&gt;
+&lt;/ai-image&gt;
+
+&lt;!-- 根据数据在地图上标注 --&gt;
+&lt;ai-map p="在地图上标注这些地点"&gt;
+  &lt;ai-data p="列出巴黎最著名的5个旅游景点及其地址" /&gt;
+&lt;/ai-map&gt;
+
+&lt;!-- 根据数据播放对应音乐 --&gt;
+&lt;ai-music p="播放适合这个场景的音乐"&gt;
+  &lt;ai-data p="描述一个下雨天在咖啡馆阅读的场景氛围" format="text" /&gt;
+&lt;/ai-music&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+        </div>
+
+        <!-- Example 5: CSV format -->
+        <div>
+          <h3 class="font-semibold mb-3">5. 指定数据格式</h3>
+          <p class="text-sm text-gray-500 mb-3">通过 <code>format</code> 属性指定 LLM 返回的数据格式。</p>
+          <pre class="code-block"><code>&lt;!-- CSV 格式 --&gt;
+&lt;ai-component p="用表格展示以下 CSV 数据"&gt;
+  &lt;ai-data p="mock一份销售报表数据，10行，包含日期、产品、销量、营收" format="csv" /&gt;
+&lt;/ai-component&gt;
+
+&lt;!-- 纯文本格式 --&gt;
+&lt;ai-component p="用优美的排版展示这首诗"&gt;
+  &lt;ai-data p="写一首关于春天的五言绝句" format="text" /&gt;
+&lt;/ai-component&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+        </div>
+
+        <!-- Example 6: Programmatic access -->
+        <div>
+          <h3 class="font-semibold mb-3">6. JavaScript 编程式访问</h3>
+          <p class="text-sm text-gray-500 mb-3">可以通过 JavaScript 监听事件或读取 <code>.data</code> 属性来获取数据。</p>
+          <pre class="code-block"><code>&lt;ai-data id="myData" p="生成5个随机用户数据"&gt;&lt;/ai-data&gt;
+
+&lt;script&gt;
+  var dataEl = document.getElementById('myData');
+
+  // 方式1: 监听事件
+  dataEl.addEventListener('ai-data-ready', function(e) {
+    console.log('数据已就绪:', e.detail);
+    var users = JSON.parse(e.detail);
+    // 用数据做任何事情...
+  });
+
+  // 方式2: 轮询检查
+  // dataEl.data 在就绪后为非 null 字符串
+&lt;/script&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== How it Works ====== -->
+    <section id="how-it-works">
+      <h2 class="text-xl font-bold mb-4">工作原理</h2>
+      <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div class="flex gap-3">
+          <span class="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+          <div>
+            <h4 class="font-semibold text-sm">连接到 DOM</h4>
+            <p class="text-xs text-gray-500 mt-1"><code>connectedCallback</code> 触发，设置 <code>display: none</code>，开始数据获取流程。</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <span class="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+          <div>
+            <h4 class="font-semibold text-sm">等待子数据（如有嵌套）</h4>
+            <p class="text-xs text-gray-500 mt-1">检查内部是否有嵌套的 <code>&lt;ai-data&gt;</code> 子元素。如果有，先等待它们全部完成并收集数据。</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <span class="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+          <div>
+            <h4 class="font-semibold text-sm">调用 LLM 获取数据</h4>
+            <p class="text-xs text-gray-500 mt-1">使用数据专用系统提示词（要求只输出纯数据，无 Markdown），将子数据作为上下文注入 prompt，流式获取 LLM 响应并累积。</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <span class="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+          <div>
+            <h4 class="font-semibold text-sm">清理 & 存储</h4>
+            <p class="text-xs text-gray-500 mt-1">去除可能的代码围栏标记，清理首尾空白。将结果存储到 <code>.data</code> 属性。</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <span class="w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold flex-shrink-0">5</span>
+          <div>
+            <h4 class="font-semibold text-sm">触发就绪事件</h4>
+            <p class="text-xs text-gray-500 mt-1">派发 <code>ai-data-ready</code> CustomEvent（不冒泡），父组件收到后将数据注入自己的 prompt 并启动生成。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== Architecture ====== -->
+    <section id="architecture">
+      <h2 class="text-xl font-bold mb-4">架构设计</h2>
+      <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="font-semibold text-sm mb-3 text-gray-700">通用基类能力</h3>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">
+          <code>&lt;ai-data&gt;</code> 的等待机制不是写在 <code>ai-data</code> 组件内部的，而是通过核心工具函数
+          <code>waitForChildData()</code> 实现的。这意味着<strong>所有 AI 组件都自动获得了这个能力</strong> —
+          只需在自己的生命周期开始前调用一下这个函数即可。
+        </p>
+        <pre class="code-block"><code>// 核心工具函数（src/core/data-manager.ts）
+import { waitForChildData, buildPromptWithData } from './core/data-manager';
+
+// 在任意 AI 组件的 _generate / _render 方法中：
+const childData = await waitForChildData(this, signal);
+const finalPrompt = buildPromptWithData(prompt, childData);</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+        <p class="text-sm text-gray-500 mt-3">
+          如果没有 <code>&lt;ai-data&gt;</code> 子元素，<code>waitForChildData()</code> 立即返回 <code>null</code>，零开销。
+        </p>
+      </div>
+    </section>
+
+    <!-- ====== Nav ====== -->
+    <div class="flex justify-between items-center pt-8 border-t border-gray-200">
+      <a href="./ai-component.html" class="text-sm text-indigo-600 hover:text-indigo-800 transition-colors">← ai-component</a>
+      <a href="./ai-image.html" class="text-sm text-indigo-600 hover:text-indigo-800 transition-colors">ai-image →</a>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script type="module">
+  import { renderNav } from '../shared/nav.js';
+  renderNav({ currentPage: 'ai-data', basePath: '..' });
+</script>
+</body>
+</html>

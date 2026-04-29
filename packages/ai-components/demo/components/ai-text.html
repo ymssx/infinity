@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;ai-text&gt; — AI Components</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 antialiased">
+
+<div class="flex pt-14">
+<main class="flex-1 lg:ml-56 min-h-screen">
+  <div class="max-w-4xl mx-auto px-8 py-12 pb-32 space-y-16">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="../index.html">首页</a>
+      <span class="sep">/</span>
+      <a href="../index.html#components-preview">组件</a>
+      <span class="sep">/</span>
+      <span>&lt;ai-text&gt;</span>
+    </div>
+
+    <!-- ====== Overview ====== -->
+    <section id="overview">
+      <div class="flex items-center gap-4 mb-6">
+        <span class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">✏️</span>
+        <div>
+          <h1 class="text-3xl font-extrabold text-gray-900">&lt;ai-text&gt;</h1>
+          <p class="text-gray-500 text-sm mt-1">AI 纯文本组件 — 流式生成纯文本，无 HTML 解析</p>
+        </div>
+      </div>
+
+      <div class="card p-6 mb-8">
+        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+          <code>&lt;ai-text&gt;</code> 是一个<strong>纯文本生成组件</strong>。与 <code>&lt;ai-component&gt;</code>
+          不同的是，它只输出纯文本内容（使用 <code>textContent</code>），不会解析或渲染任何 HTML 标签。
+          适合用于标题、段落、广告文案、诗歌、翻译等场景。
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="badge bg-emerald-50 text-emerald-600 border border-emerald-200">纯文本</span>
+          <span class="badge bg-blue-50 text-blue-600 border border-blue-200">流式输出</span>
+          <span class="badge bg-violet-50 text-violet-600 border border-violet-200">XSS 安全</span>
+          <span class="badge bg-amber-50 text-amber-600 border border-amber-200">支持 ai-data</span>
+        </div>
+      </div>
+
+      <!-- Key difference callout -->
+      <div class="bg-emerald-50/50 border border-emerald-200 rounded-xl p-4 mb-8">
+        <p class="text-sm text-emerald-700">
+          <strong>💡 与 ai-component 的区别：</strong>
+          <code>&lt;ai-text&gt;</code> 使用 <code>textContent</code> 追加内容，天然防止 XSS，
+          也不会因为 LLM 输出意外的 HTML 标签而破坏页面布局。当你只需要文本内容时，优先选择它。
+        </p>
+      </div>
+    </section>
+
+    <!-- ====== Quick Start ====== -->
+    <section id="quick-start">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">快速开始</h2>
+
+      <pre class="code-block"><code>&lt;!-- 最简用法 --&gt;
+&lt;ai-text p="写一首关于春天的俳句"&gt;&lt;/ai-text&gt;
+
+&lt;!-- 自定义标签和样式 --&gt;
+&lt;ai-text p="用一句话描述量子计算" tag="span" class="text-lg font-bold text-indigo-600"&gt;&lt;/ai-text&gt;
+
+&lt;!-- 搭配 ai-data 使用 --&gt;
+&lt;ai-text p="给这个产品写一段广告语"&gt;
+  &lt;ai-data p="mock一个智能手表的产品信息" /&gt;
+&lt;/ai-text&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+    </section>
+
+    <!-- ====== Props ====== -->
+    <section id="props">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">属性</h2>
+
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200">
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">属性</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">类型</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">默认值</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3"><code class="text-indigo-600 font-mono">p</code></td>
+              <td class="px-5 py-3 text-gray-500">string</td>
+              <td class="px-5 py-3 text-gray-400">—</td>
+              <td class="px-5 py-3 text-gray-600"><strong>必填</strong>。自然语言提示词</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3"><code class="text-indigo-600 font-mono">tag</code></td>
+              <td class="px-5 py-3 text-gray-500">string</td>
+              <td class="px-5 py-3 text-gray-400">"p"</td>
+              <td class="px-5 py-3 text-gray-600">包裹元素的标签名。可用 "span"、"h1"、"div" 等</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3"><code class="text-indigo-600 font-mono">class</code></td>
+              <td class="px-5 py-3 text-gray-500">string</td>
+              <td class="px-5 py-3 text-gray-400">—</td>
+              <td class="px-5 py-3 text-gray-600">转发到内部包裹元素的 CSS 类名</td>
+            </tr>
+            <tr>
+              <td class="px-5 py-3"><code class="text-indigo-600 font-mono">style</code></td>
+              <td class="px-5 py-3 text-gray-500">string</td>
+              <td class="px-5 py-3 text-gray-400">—</td>
+              <td class="px-5 py-3 text-gray-600">转发到内部包裹元素的行内样式</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====== Examples ====== -->
+    <section id="examples">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">使用示例</h2>
+
+      <!-- Example 1: Basic text -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">基础文本</h3>
+        <p class="text-xs text-gray-500 mb-4">最简单的用法 — 一个 prompt 生成一段文字。</p>
+        <pre class="code-block"><code>&lt;ai-text p="写一首关于秋天的五言绝句"&gt;&lt;/ai-text&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+
+      <!-- Example 2: Inline text -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">行内文本</h3>
+        <p class="text-xs text-gray-500 mb-4">使用 <code>tag="span"</code> 生成行内文本，嵌入到其他内容中。</p>
+        <pre class="code-block"><code>&lt;p&gt;今日天气：&lt;ai-text p="用3个字描述今天北京的天气" tag="span"&gt;&lt;/ai-text&gt;&lt;/p&gt;
+
+&lt;h2&gt;
+  &lt;ai-text p="给一个科技博客起一个吸引人的名字" tag="span" class="text-indigo-600"&gt;&lt;/ai-text&gt;
+&lt;/h2&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+
+      <!-- Example 3: With ai-data -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">搭配 ai-data</h3>
+        <p class="text-xs text-gray-500 mb-4">先获取产品数据，再基于数据生成文案。</p>
+        <pre class="code-block"><code>&lt;ai-text p="用诗意的语言描述这个产品的核心卖点，不超过50字"&gt;
+  &lt;ai-data p="mock一个高端降噪耳机的产品信息" /&gt;
+&lt;/ai-text&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+
+      <!-- Example 4: Heading generation -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">动态标题</h3>
+        <p class="text-xs text-gray-500 mb-4">用 <code>tag="h1"</code> 生成页面标题。</p>
+        <pre class="code-block"><code>&lt;ai-text p="给一个在线教育平台起一个有创意的标题" tag="h1"
+  class="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"&gt;
+&lt;/ai-text&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+
+      <!-- Example 5: Multiple ai-text in a layout -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">组合布局</h3>
+        <p class="text-xs text-gray-500 mb-4">多个 ai-text 组合使用，构建完整的文本内容。</p>
+        <pre class="code-block"><code>&lt;div class="space-y-4"&gt;
+  &lt;ai-text p="给科技文章起标题" tag="h2" class="text-2xl font-bold"&gt;&lt;/ai-text&gt;
+  &lt;ai-text p="写一段100字左右的科技文章开头" class="text-gray-600 leading-relaxed"&gt;&lt;/ai-text&gt;
+  &lt;ai-text p="用一句话做文章总结" tag="blockquote" class="border-l-4 border-indigo-400 pl-4 italic text-gray-500"&gt;&lt;/ai-text&gt;
+&lt;/div&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+    </section>
+
+    <!-- ====== How it works ====== -->
+    <section id="how-it-works">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">工作原理</h2>
+
+      <div class="card p-6">
+        <div class="space-y-4 text-sm text-gray-600">
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+            <div><strong>等待数据</strong> — 如果内部有 <code>&lt;ai-data&gt;</code> 子元素，先等待其解析完成。</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+            <div><strong>专用系统提示词</strong> — 使用纯文本专用的系统提示词，明确禁止 LLM 输出 HTML / Markdown 标记。</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+            <div><strong>textContent 追加</strong> — 使用 <code>textContent</code> 而非 <code>innerHTML</code> 追加内容。即使 LLM 意外输出 HTML，也只会显示为纯文本。</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
+            <div><strong>可定制标签</strong> — 通过 <code>tag</code> 属性选择包裹元素（<code>&lt;p&gt;</code>、<code>&lt;span&gt;</code>、<code>&lt;h1&gt;</code> 等），<code>class</code> 和 <code>style</code> 自动转发。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== vs ai-component ====== -->
+    <section id="comparison">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">对比 ai-component</h2>
+
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200">
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">特性</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">&lt;ai-text&gt;</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">&lt;ai-component&gt;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3 text-gray-600">输出类型</td>
+              <td class="px-5 py-3">纯文本</td>
+              <td class="px-5 py-3">HTML 片段</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3 text-gray-600">DOM 构建</td>
+              <td class="px-5 py-3">textContent</td>
+              <td class="px-5 py-3">IncrementalDOMBuilder</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3 text-gray-600">XSS 安全</td>
+              <td class="px-5 py-3">✅ 天然安全</td>
+              <td class="px-5 py-3">⚠️ 需信任 LLM 输出</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3 text-gray-600">嵌套支持</td>
+              <td class="px-5 py-3">不支持嵌套自身</td>
+              <td class="px-5 py-3">3 层深度</td>
+            </tr>
+            <tr>
+              <td class="px-5 py-3 text-gray-600">适用场景</td>
+              <td class="px-5 py-3">标题、文案、翻译</td>
+              <td class="px-5 py-3">完整页面/组件</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div><!-- max-w-4xl -->
+</main>
+</div><!-- flex -->
+
+<!-- Scripts -->
+<script type="module">
+  import { renderNav, copyCode } from '../shared/nav.js';
+  renderNav({ currentPage: 'ai-text', basePath: '..' });
+  window.copyCode = copyCode;
+</script>
+</body>
+</html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;ai-markdown&gt; — AI Components</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 antialiased">
+
+<div class="flex pt-14">
+<main class="flex-1 lg:ml-56 min-h-screen">
+  <div class="max-w-4xl mx-auto px-8 py-12 pb-32 space-y-16">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="../index.html">首页</a>
+      <span class="sep">/</span>
+      <a href="../index.html#components-preview">组件</a>
+      <span class="sep">/</span>
+      <span>&lt;ai-markdown&gt;</span>
+    </div>
+
+    <!-- ====== Overview ====== -->
+    <section id="overview">
+      <div class="flex items-center gap-4 mb-6">
+        <span class="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center text-2xl">📝</span>
+        <div>
+          <h1 class="text-3xl font-extrabold text-gray-900">&lt;ai-markdown&gt;</h1>
+          <p class="text-gray-500 text-sm mt-1">AI Markdown 组件 — LLM 生成 Markdown 并渲染为精美 HTML</p>
+        </div>
+      </div>
+
+      <div class="card p-6 mb-8">
+        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+          <code>&lt;ai-markdown&gt;</code> 让 LLM 以 Markdown 格式输出内容，然后自动将其渲染为精美的 HTML。
+          内置了完整的 Markdown 解析器（零外部依赖），支持标题、列表、表格、代码块、引用等所有常用 Markdown 语法。
+          非常适合文档、教程、博客文章、技术报告等结构化文本内容。
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="badge bg-cyan-50 text-cyan-600 border border-cyan-200">Markdown</span>
+          <span class="badge bg-blue-50 text-blue-600 border border-blue-200">流式渲染</span>
+          <span class="badge bg-violet-50 text-violet-600 border border-violet-200">多主题</span>
+          <span class="badge bg-amber-50 text-amber-600 border border-amber-200">零依赖</span>
+          <span class="badge bg-green-50 text-green-600 border border-green-200">支持 ai-data</span>
+        </div>
+      </div>
+
+      <!-- Key feature callout -->
+      <div class="bg-cyan-50/50 border border-cyan-200 rounded-xl p-4 mb-8">
+        <p class="text-sm text-cyan-700">
+          <strong>💡 为什么选 ai-markdown？</strong>
+          Markdown 是 LLM 最擅长的输出格式。让 LLM 用 Markdown 输出，比直接生成 HTML 更可靠、更结构化，
+          而且内置的渲染器提供统一的排版和样式，确保视觉效果一致。
+        </p>
+      </div>
+    </section>
+
+    <!-- ====== Quick Start ====== -->
+    <section id="quick-start">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">快速开始</h2>
+
+      <pre class="code-block"><code>&lt;!-- 基础用法 --&gt;
+&lt;ai-markdown p="写一篇关于 TypeScript 泛型的简短教程"&gt;&lt;/ai-markdown&gt;
+
+&lt;!-- 暗色主题 --&gt;
+&lt;div class="bg-slate-900 p-6 rounded-xl"&gt;
+  &lt;ai-markdown p="解释 Promise 的工作原理" theme="dark"&gt;&lt;/ai-markdown&gt;
+&lt;/div&gt;
+
+&lt;!-- 搭配 ai-data --&gt;
+&lt;ai-markdown p="根据这些数据写一份分析报告"&gt;
+  &lt;ai-data p="mock一组季度销售数据，包含4个季度的收入和利润" /&gt;
+&lt;/ai-markdown&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+    </section>
+
+    <!-- ====== Props ====== -->
+    <section id="props">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">属性</h2>
+
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200">
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">属性</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">类型</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">默认值</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3"><code class="text-indigo-600 font-mono">p</code></td>
+              <td class="px-5 py-3 text-gray-500">string</td>
+              <td class="px-5 py-3 text-gray-400">—</td>
+              <td class="px-5 py-3 text-gray-600"><strong>必填</strong>。自然语言提示词</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3"><code class="text-indigo-600 font-mono">theme</code></td>
+              <td class="px-5 py-3 text-gray-500">string</td>
+              <td class="px-5 py-3 text-gray-400">"github"</td>
+              <td class="px-5 py-3 text-gray-600">渲染主题。可选 "github"、"minimal"、"dark"</td>
+            </tr>
+            <tr>
+              <td class="px-5 py-3"><code class="text-indigo-600 font-mono">class</code></td>
+              <td class="px-5 py-3 text-gray-500">string</td>
+              <td class="px-5 py-3 text-gray-400">—</td>
+              <td class="px-5 py-3 text-gray-600">附加到内容容器的 CSS 类名</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====== Themes ====== -->
+    <section id="themes">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">主题预览</h2>
+
+      <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <!-- GitHub theme -->
+        <div class="card p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+            <span class="text-sm font-semibold text-gray-700">github</span>
+            <span class="badge text-[10px] bg-green-50 text-green-600">默认</span>
+          </div>
+          <p class="text-xs text-gray-500">GitHub 风格。清爽、专业，适合技术文档和博客。带有渐变标题底部边框。</p>
+          <pre class="code-block mt-2 !text-[11px]"><code>&lt;ai-markdown p="..." theme="github"&gt;&lt;/ai-markdown&gt;</code></pre>
+        </div>
+
+        <!-- Minimal theme -->
+        <div class="card p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+            <span class="text-sm font-semibold text-gray-700">minimal</span>
+          </div>
+          <p class="text-xs text-gray-500">极简风格。衬线字体，更大的行距，适合阅读舒适度优先的长文本。</p>
+          <pre class="code-block mt-2 !text-[11px]"><code>&lt;ai-markdown p="..." theme="minimal"&gt;&lt;/ai-markdown&gt;</code></pre>
+        </div>
+
+        <!-- Dark theme -->
+        <div class="card p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-3 h-3 rounded-full bg-indigo-400"></span>
+            <span class="text-sm font-semibold text-gray-700">dark</span>
+          </div>
+          <p class="text-xs text-gray-500">暗色主题。适合深色背景。代码块使用更深的底色，内联代码为粉色。</p>
+          <pre class="code-block mt-2 !text-[11px]"><code>&lt;ai-markdown p="..." theme="dark"&gt;&lt;/ai-markdown&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== Markdown Support ====== -->
+    <section id="syntax">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">支持的 Markdown 语法</h2>
+
+      <div class="card p-6">
+        <div class="grid md:grid-cols-2 gap-4 text-sm">
+          <div class="space-y-2">
+            <h4 class="font-semibold text-gray-800">文本格式</h4>
+            <ul class="space-y-1 text-gray-600">
+              <li>✅ 标题 <code># ~ ######</code></li>
+              <li>✅ 粗体 <code>**bold**</code></li>
+              <li>✅ 斜体 <code>*italic*</code></li>
+              <li>✅ 删除线 <code>~~text~~</code></li>
+              <li>✅ 行内代码 <code>`code`</code></li>
+              <li>✅ 链接 <code>[text](url)</code></li>
+              <li>✅ 图片 <code>![alt](url)</code></li>
+            </ul>
+          </div>
+          <div class="space-y-2">
+            <h4 class="font-semibold text-gray-800">块级元素</h4>
+            <ul class="space-y-1 text-gray-600">
+              <li>✅ 代码块（带语言高亮类名）</li>
+              <li>✅ 无序列表 <code>- item</code></li>
+              <li>✅ 有序列表 <code>1. item</code></li>
+              <li>✅ 引用 <code>&gt; text</code></li>
+              <li>✅ 表格 <code>| col |</code></li>
+              <li>✅ 水平线 <code>---</code></li>
+              <li>✅ 段落（自动识别换行）</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== Examples ====== -->
+    <section id="examples">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">使用示例</h2>
+
+      <!-- Example 1: Tutorial -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">技术教程</h3>
+        <p class="text-xs text-gray-500 mb-4">LLM 擅长以 Markdown 格式输出结构化教程。</p>
+        <pre class="code-block"><code>&lt;ai-markdown p="写一篇简短的 CSS Grid 入门教程，包含代码示例"&gt;&lt;/ai-markdown&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+
+      <!-- Example 2: Comparison -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">对比表格</h3>
+        <p class="text-xs text-gray-500 mb-4">非常适合让 LLM 生成对比分析表格。</p>
+        <pre class="code-block"><code>&lt;ai-markdown p="用表格对比 React, Vue, Svelte 三个框架的优缺点、学习曲线和社区生态"&gt;&lt;/ai-markdown&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+
+      <!-- Example 3: Data report -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">数据报告</h3>
+        <p class="text-xs text-gray-500 mb-4">搭配 <code>&lt;ai-data&gt;</code> 获取数据后生成分析报告。</p>
+        <pre class="code-block"><code>&lt;ai-markdown p="根据数据写一份月度销售分析报告，包含趋势分析和建议"&gt;
+  &lt;ai-data p="mock一组电商月度销售数据，包含各品类的销售额和环比增长率" /&gt;
+&lt;/ai-markdown&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+
+      <!-- Example 4: Dark theme -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">暗色主题</h3>
+        <p class="text-xs text-gray-500 mb-4">在暗色背景中使用 <code>theme="dark"</code>。</p>
+        <pre class="code-block"><code>&lt;div class="bg-slate-900 p-8 rounded-xl"&gt;
+  &lt;ai-markdown p="用 Markdown 解释 async/await 的工作原理，包含代码示例" theme="dark"&gt;&lt;/ai-markdown&gt;
+&lt;/div&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+
+      <!-- Example 5: Code review -->
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">代码审查</h3>
+        <p class="text-xs text-gray-500 mb-4">将代码片段作为数据输入，让 LLM 写 code review。</p>
+        <pre class="code-block"><code>&lt;ai-markdown p="对这段代码进行 code review，指出问题并给出改进建议"&gt;
+  &lt;ai-data p="生成一段有常见问题的 JavaScript 代码（如变量命名不规范、缺少错误处理等）" format="text" /&gt;
+&lt;/ai-markdown&gt;</code><button class="copy-btn" onclick="copyCode(this)">复制</button></pre>
+      </div>
+    </section>
+
+    <!-- ====== How it works ====== -->
+    <section id="how-it-works">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">工作原理</h2>
+
+      <div class="card p-6">
+        <div class="space-y-4 text-sm text-gray-600">
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+            <div><strong>等待数据</strong> — 如果内部有 <code>&lt;ai-data&gt;</code>，先等待解析完成。</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+            <div><strong>Markdown 系统提示词</strong> — 使用专用提示词，指示 LLM 以纯 Markdown 格式输出。</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+            <div><strong>流式累积</strong> — 每次收到 chunk，追加到 Markdown 缓冲区。</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
+            <div><strong>实时渲染</strong> — 每次 chunk 到达时，对完整缓冲区重新解析 Markdown → HTML → <code>innerHTML</code> 渲染。用户看到内容逐步丰富。</div>
+          </div>
+          <div class="flex gap-3">
+            <span class="w-6 h-6 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">5</span>
+            <div><strong>主题注入</strong> — 根据 <code>theme</code> 属性注入对应的 CSS 样式表，所有 Markdown 元素自动获得统一样式。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== Comparison ====== -->
+    <section id="comparison">
+      <h2 class="section-title text-xl font-bold text-gray-900 mb-4">对比其他组件</h2>
+
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200">
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">特性</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">&lt;ai-markdown&gt;</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">&lt;ai-text&gt;</th>
+              <th class="text-left px-5 py-3 font-semibold text-gray-600">&lt;ai-component&gt;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3 text-gray-600">LLM 输出格式</td>
+              <td class="px-5 py-3">Markdown</td>
+              <td class="px-5 py-3">纯文本</td>
+              <td class="px-5 py-3">HTML</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3 text-gray-600">渲染方式</td>
+              <td class="px-5 py-3">MD → HTML (innerHTML)</td>
+              <td class="px-5 py-3">textContent</td>
+              <td class="px-5 py-3">IncrementalDOMBuilder</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3 text-gray-600">样式控制</td>
+              <td class="px-5 py-3">内置主题系统</td>
+              <td class="px-5 py-3">外部 CSS 控制</td>
+              <td class="px-5 py-3">LLM 自主决定</td>
+            </tr>
+            <tr class="border-b border-gray-100">
+              <td class="px-5 py-3 text-gray-600">可靠性</td>
+              <td class="px-5 py-3">⭐⭐⭐ 高</td>
+              <td class="px-5 py-3">⭐⭐⭐ 最高</td>
+              <td class="px-5 py-3">⭐⭐ 依赖 LLM</td>
+            </tr>
+            <tr>
+              <td class="px-5 py-3 text-gray-600">最佳场景</td>
+              <td class="px-5 py-3">文档/教程/报告</td>
+              <td class="px-5 py-3">标题/文案/翻译</td>
+              <td class="px-5 py-3">完整 UI 组件</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div><!-- max-w-4xl -->
+</main>
+</div><!-- flex -->
+
+<!-- Scripts -->
+<script type="module">
+  import { renderNav, copyCode } from '../shared/nav.js';
+  renderNav({ currentPage: 'ai-markdown', basePath: '..' });
+  window.copyCode = copyCode;
+</script>
+</body>
+</html>

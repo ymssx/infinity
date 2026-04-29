@@ -59,14 +59,16 @@ export function getSystemPrompt(depth?: number): string {
  * @param prompt  - user-facing prompt text
  * @param signal  - optional AbortSignal
  * @param depth   - nesting depth of the calling <ai-component> (1-based)
+ * @param systemPromptOverride - optional custom system prompt (bypasses depth-aware logic)
  */
 export async function* streamLLM(
   prompt: string,
   signal?: AbortSignal,
   depth?: number,
+  systemPromptOverride?: string,
 ): AsyncGenerator<string> {
   const requestFn = getRequestFn();
-  const systemPrompt = getSystemPrompt(depth);
+  const systemPrompt = systemPromptOverride ?? getSystemPrompt(depth);
 
   const iterable = requestFn(prompt, { signal, systemPrompt });
 

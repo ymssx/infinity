@@ -21,6 +21,7 @@
 import { IncrementalDOMBuilder } from "../../core/dom-builder";
 import { streamLLM } from "../../core/stream";
 import { buildPrompt, MAX_DEPTH } from "../../core/prompt";
+import { waitForChildData, buildPromptWithData } from "../../core/data-manager";
 
 export class AIComponent extends HTMLElement {
   /** Abort controller for the current generation */
@@ -124,7 +125,13 @@ export class AIComponent extends HTMLElement {
     this._showLoading(prompt);
 
     try {
-      const finalPrompt = buildPrompt(prompt);
+      // Step 1: Wait for any child <ai-data> elements to resolve
+      const childData = await waitForChildData(this, signal);
+      if (signal.aborted) return;
+
+      // Step 2: Build the final prompt, injecting child data context if available
+      const basePrompt = buildPrompt(prompt);
+      const finalPrompt = buildPromptWithData(basePrompt, childData);
 
       // Strip code fences state
       let prefixBuffer = "";

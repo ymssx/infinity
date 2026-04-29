@@ -26,20 +26,40 @@ export function renderNav({ currentPage = 'home', basePath = '.' } = {}) {
       <a href="${basePath}/index.html" class="nav-link ${currentPage === 'home' ? 'active' : ''}">首页</a>
       <a href="${basePath}/guide/install.html" class="nav-link ${['install', 'architecture'].includes(currentPage) ? 'active' : ''}">指南</a>
       <div class="nav-dropdown relative">
-        <a href="${basePath}/components/ai-component.html" class="nav-link ${currentPage === 'ai-component' ? 'active' : ''}">组件 <span class="nav-arrow">▾</span></a>
+        <a href="${basePath}/components/ai-component.html" class="nav-link ${['ai-component','ai-data','ai-text','ai-markdown','ai-image','ai-canvas','ai-map','ai-music'].includes(currentPage) ? 'active' : ''}">组件 <span class="nav-arrow">▾</span></a>
         <div class="nav-dropdown-menu absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200/80 py-2 min-w-[200px] opacity-0 invisible transition-all duration-200">
           <a href="${basePath}/components/ai-component.html" class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
             <code class="text-xs font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">&lt;ai-component&gt;</code>
             <span class="badge text-[10px] bg-green-50 text-green-600 border border-green-200 ml-auto">可用</span>
           </a>
-          <div class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 cursor-default">
-            <code class="text-xs font-mono bg-gray-50 text-gray-300 px-1.5 py-0.5 rounded">&lt;wc-table&gt;</code>
-            <span class="badge text-[10px] bg-gray-50 text-gray-300 border border-gray-200 ml-auto">开发中</span>
-          </div>
-          <div class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-300 cursor-default">
-            <code class="text-xs font-mono bg-gray-50 text-gray-300 px-1.5 py-0.5 rounded">&lt;wc-chart&gt;</code>
-            <span class="badge text-[10px] bg-gray-50 text-gray-300 border border-gray-200 ml-auto">开发中</span>
-          </div>
+          <a href="${basePath}/components/ai-data.html" class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+            <code class="text-xs font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">&lt;ai-data&gt;</code>
+            <span class="badge text-[10px] bg-blue-50 text-blue-600 border border-blue-200 ml-auto">核心</span>
+          </a>
+          <a href="${basePath}/components/ai-text.html" class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+            <code class="text-xs font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">&lt;ai-text&gt;</code>
+            <span class="badge text-[10px] bg-green-50 text-green-600 border border-green-200 ml-auto">可用</span>
+          </a>
+          <a href="${basePath}/components/ai-markdown.html" class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+            <code class="text-xs font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">&lt;ai-markdown&gt;</code>
+            <span class="badge text-[10px] bg-green-50 text-green-600 border border-green-200 ml-auto">可用</span>
+          </a>
+          <a href="${basePath}/components/ai-image.html" class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+            <code class="text-xs font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">&lt;ai-image&gt;</code>
+            <span class="badge text-[10px] bg-green-50 text-green-600 border border-green-200 ml-auto">可用</span>
+          </a>
+          <a href="${basePath}/components/ai-canvas.html" class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+            <code class="text-xs font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">&lt;ai-canvas&gt;</code>
+            <span class="badge text-[10px] bg-green-50 text-green-600 border border-green-200 ml-auto">可用</span>
+          </a>
+          <a href="${basePath}/components/ai-map.html" class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+            <code class="text-xs font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">&lt;ai-map&gt;</code>
+            <span class="badge text-[10px] bg-green-50 text-green-600 border border-green-200 ml-auto">可用</span>
+          </a>
+          <a href="${basePath}/components/ai-music.html" class="nav-dropdown-item flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+            <code class="text-xs font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">&lt;ai-music&gt;</code>
+            <span class="badge text-[10px] bg-green-50 text-green-600 border border-green-200 ml-auto">可用</span>
+          </a>
         </div>
       </div>
       <a href="${basePath}/api/index.html" class="nav-link ${currentPage === 'api' ? 'active' : ''}">API</a>
@@ -60,16 +80,30 @@ export function renderNav({ currentPage = 'home', basePath = '.' } = {}) {
       { href: `${basePath}/guide/architecture.html`, text: '架构原理', page: 'architecture' },
       { type: 'title', text: '组件' },
       { href: `${basePath}/components/ai-component.html`, text: '<ai-component>', page: 'ai-component', code: true },
-      { text: '更多组件开发中…', disabled: true },
+      { href: `${basePath}/components/ai-data.html`, text: '<ai-data>', page: 'ai-data', code: true },
+      { href: `${basePath}/components/ai-image.html`, text: '<ai-image>', page: 'ai-image', code: true },
+      { href: `${basePath}/components/ai-canvas.html`, text: '<ai-canvas>', page: 'ai-canvas', code: true },
+      { href: `${basePath}/components/ai-map.html`, text: '<ai-map>', page: 'ai-map', code: true },
+      { href: `${basePath}/components/ai-music.html`, text: '<ai-music>', page: 'ai-music', code: true },
       { type: 'title', text: 'API' },
       { href: `${basePath}/api/index.html`, text: 'API 参考', page: 'api' },
     ],
     install: 'home',
     architecture: 'home',
-    'ai-component': [
+    'ai-component': 'componentSidebar',
+    'ai-data': 'componentSidebar',
+    'ai-image': 'componentSidebar',
+    'ai-canvas': 'componentSidebar',
+    'ai-map': 'componentSidebar',
+    'ai-music': 'componentSidebar',
+    componentSidebar: [
       { type: 'title', text: '组件' },
       { href: `${basePath}/components/ai-component.html`, text: '<ai-component>', page: 'ai-component', code: true },
-      { text: '更多组件开发中…', disabled: true },
+      { href: `${basePath}/components/ai-data.html`, text: '<ai-data>', page: 'ai-data', code: true },
+      { href: `${basePath}/components/ai-image.html`, text: '<ai-image>', page: 'ai-image', code: true },
+      { href: `${basePath}/components/ai-canvas.html`, text: '<ai-canvas>', page: 'ai-canvas', code: true },
+      { href: `${basePath}/components/ai-map.html`, text: '<ai-map>', page: 'ai-map', code: true },
+      { href: `${basePath}/components/ai-music.html`, text: '<ai-music>', page: 'ai-music', code: true },
       { type: 'title', text: '页面内容' },
       { href: '#overview', text: '概览', hash: true },
       { href: '#props', text: '属性', hash: true },
